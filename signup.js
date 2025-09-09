@@ -1,4 +1,4 @@
-// signup.js
+// signup.js (versi baru, pakai trigger SQL)
 document.getElementById('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -17,18 +17,19 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
     }
 
     if (data.user) {
-        await window.supabase.auth.getSession();
+        // ✅ Row di tabel "users" otomatis dibuat oleh trigger SQL
+        // Sekarang tinggal update data user itu (username & whatsapp)
 
-        const { error: dbError } = await window.supabase.from('users').insert([{
-            id: data.user.id,
-            username: username,
-            whatsapp: whatsapp,
-            role: 'user'
-        }]);
+        const { error: updateError } = await window.supabase
+            .from("users")
+            .update({
+                username: username,
+                whatsapp: whatsapp
+            })
+            .eq("id", data.user.id);
 
-        if (dbError) {
-            alert('Sign up berhasil, tapi gagal simpan profil: ' + dbError.message);
-            await window.supabase.auth.signOut();
+        if (updateError) {
+            alert('Sign up berhasil, tapi gagal update profil: ' + updateError.message);
             return;
         }
 
