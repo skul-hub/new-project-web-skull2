@@ -22,8 +22,16 @@ async function checkAdminAuth() {
   }
 
   currentUser = userData;
-  loadOrders();
-  loadProducts();
+  showSection('orders'); // default buka Orders
+}
+
+function showSection(section) {
+  document.getElementById('orders').style.display = 'none';
+  document.getElementById('products').style.display = 'none';
+  document.getElementById(section).style.display = 'block';
+
+  if (section === 'orders') loadOrders();
+  if (section === 'products') loadProducts();
 }
 
 async function loadOrders() {
@@ -111,6 +119,20 @@ async function loadProducts() {
   }
 }
 
+async function addProduct(e) {
+  e.preventDefault();
+  const name = document.getElementById('productName').value;
+  const price = parseInt(document.getElementById('productPrice').value);
+  const image = document.getElementById('productImage').value;
+
+  const { error } = await window.supabase.from('products').insert([{ name, price, image }]);
+  if (error) return alert('Error: ' + error.message);
+
+  alert('Produk berhasil ditambahkan!');
+  document.getElementById('addProductForm').reset();
+  loadProducts();
+}
+
 window.onload = () => {
   checkAdminAuth();
 };
@@ -118,4 +140,4 @@ window.onload = () => {
 async function logout() {
   await window.supabase.auth.signOut();
   window.location.href = 'signin.html';
-}
+          }
