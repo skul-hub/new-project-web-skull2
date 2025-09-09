@@ -13,33 +13,27 @@
   <header>
     <nav class="navbar">
       <div class="navbar-brand">
-        <h1><a href="index.html">STORESKULL - Admin</a></h1>
+        <h1>Admin - STORESKULL</h1>
       </div>
       <ul class="nav-links">
-        <li><a href="#products" onclick="showSection('products')">Kelola Produk</a></li>
-        <li><a href="#orders" onclick="showSection('orders')">Kelola Pesanan</a></li>
+        <li><a href="#orders" onclick="loadOrders()">Orders</a></li>
+        <li><a href="#products" onclick="loadProducts()">Products</a></li>
         <li><a href="#" onclick="logout()">Logout</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
-    <!-- Kelola Produk -->
-    <section id="products">
-      <h2>Kelola Produk</h2>
-      <form id="addProductForm">
-        <input type="text" id="prodName" placeholder="Nama Produk" required>
-        <input type="number" id="prodPrice" placeholder="Harga" required>
-        <input type="text" id="prodImage" placeholder="URL Gambar" required>
-        <button type="submit">Tambah Produk</button>
-      </form>
-      <div id="productsList" class="products-grid"></div>
+    <!-- Orders Section -->
+    <section id="orders">
+      <h2>Orders</h2>
+      <div id="ordersContainer"></div>
     </section>
 
-    <!-- Kelola Pesanan -->
-    <section id="orders" style="display:none;">
-      <h2>Kelola Pesanan</h2>
-      <div id="ordersList"></div>
+    <!-- Products Section -->
+    <section id="products">
+      <h2>Products</h2>
+      <div id="productsContainer"></div>
     </section>
   </main>
 
@@ -47,4 +41,4 @@
     <p>&copy; 2025 SKULLHOSTING - STORESKULLHOSTING</p>
   </footer>
 </body>
-              </html>
+</html>
