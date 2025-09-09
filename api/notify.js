@@ -1,5 +1,5 @@
-// /api/notify.js (Serverless Function di Vercel)
-// Kirim notifikasi langsung ke akun admin (private chat), bukan grup
+// /api/notify.js
+// Serverless Function untuk notifikasi Telegram
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -12,22 +12,66 @@ export default async function handler(req, res) {
     }
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID; // ini isi dengan ID kamu
+    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
     if (!token || !chatId) {
       return res.status(500).json({ error: "Telegram config missing" });
     }
 
-    let text = `📥 *Orderan Baru Masuk*\n\n`;
-    orders.forEach(o => {
-      text += `👤 Username: ${o.username}\n`;
-      text += `📦 Produk: ${o.product_name}\n`;
-      text += `📱 WhatsApp: ${o.whatsapp}\n`;
-      text += `💬 Telegram: ${o.telegram_username ? '@' + o.telegram_username : '-'}\n`;
-      text += `⚡ Status: ${o.status}\n\n`;
-    });
-    text += `🔥 Silakan segera diproses.`;
+    // Ambil order terbaru (biasanya cuma 1 per call)
+    const o = orders[0];
+    let text = "";
 
+    // Buat pesan sesuai status
+    switch (o.status) {
+      case "waiting_confirmation":
+        text = `📥 *MENUNGGU KONFIRMASI PEMBAYARAN*\n\n`;
+        text += `👤 Username: ${o.username}\n`;
+        text += `📦 Produk: ${o.product_name}\n`;
+        text += `📱 WhatsApp: ${o.whatsapp}\n`;
+        text += `💬 Telegram: ${o.telegram_username ? "@" + o.telegram_username : "-"}\n`;
+        text += `📸 Bukti: ${o.payment_proof ? o.payment_proof : "-"}\n`;
+        text += `⚡ Status: waiting_confirmation\n`;
+        break;
+
+      case "payment_received":
+        text = `✅ *PEMBAYARAN MASUK*\n\n`;
+        text += `👤 Username: ${o.username}\n`;
+        text += `📦 Produk: ${o.product_name}\n`;
+        text += `📱 WhatsApp: ${o.whatsapp}\n`;
+        text += `💬 Telegram: ${o.telegram_username ? "@" + o.telegram_username : "-"}\n`;
+        text += `⚡ Status: payment_received\n`;
+        break;
+
+      case "payment_failed":
+        text = `❌ *PEMBAYARAN TIDAK MASUK*\n\n`;
+        text += `👤 Username: ${o.username}\n`;
+        text += `📦 Produk: ${o.product_name}\n`;
+        text += `📱 WhatsApp: ${o.whatsapp}\n`;
+        text += `💬 Telegram: ${o.telegram_username ? "@" + o.telegram_username : "-"}\n`;
+        text += `⚡ Status: payment_failed\n`;
+        break;
+
+      case "done":
+        text = `🎉 *PESANAN SELESAI*\n\n`;
+        text += `👤 Username: ${o.username}\n`;
+        text += `📦 Produk: ${o.product_name}\n`;
+        text += `📱 WhatsApp: ${o.whatsapp}\n`;
+        text += `💬 Telegram: ${o.telegram_username ? "@" + o.telegram_username : "-"}\n`;
+        text += `⚡ Status: done\n`;
+        break;
+
+      default:
+        text = `ℹ️ Update Pesanan\n\n`;
+        text += `👤 Username: ${o.username}\n`;
+        text += `📦 Produk: ${o.product_name}\n`;
+        text += `📱 WhatsApp: ${o.whatsapp}\n`;
+        text += `💬 Telegram: ${o.telegram_username ? "@" + o.telegram_username : "-"}\n`;
+        text += `⚡ Status: ${o.status}\n`;
+        break;
+    }
+
+    // Kirim ke Telegram
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
     const response = await fetch(url, {
       method: "POST",
