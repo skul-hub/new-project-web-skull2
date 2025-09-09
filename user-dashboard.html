@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard - STORESKULL</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="user-dashboard.js" defer></script>
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <h1><a href="index.html">STORESKULL</a></h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#products" onclick="showSection('products')">Products</a></li>
+        <li><a href="#cart" onclick="showSection('cart')">Cart</a></li>
+        <li><a href="#history" onclick="showSection('history')">History</a></li>
+        <li><a href="#" onclick="logout()">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Produk -->
+    <section id="products">
+      <h2>Products</h2>
+      <div id="productsContainer" class="products-grid"></div>
+    </section>
+
+    <!-- Keranjang -->
+    <section id="cart" style="display:none;">
+      <h2>Your Cart</h2>
+      <div id="cartItems"></div>
+      <button onclick="checkout()">Checkout</button>
+    </section>
+
+    <!-- Riwayat Pesanan -->
+    <section id="history" style="display:none;">
+      <h2>Order History</h2>
+      <div id="historyItems"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 SKULLHOSTING - STORESKULLHOSTING</p>
+  </footer>
+</body>
+                    </html>
