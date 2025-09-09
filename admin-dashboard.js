@@ -1,7 +1,7 @@
 // admin-dashboard.js
-let currentAdminUser = null;
+let currentUser = null;
 
-async function checkAdminRole() {
+async function checkAdminAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
   if (error || !user) {
     window.location.href = 'signin.html';
@@ -10,41 +10,91 @@ async function checkAdminRole() {
 
   const { data: userData, error: userError } = await window.supabase
     .from('users')
-    .select('role')
+    .select('*')
     .eq('id', user.id)
     .single();
 
   if (userError || !userData || userData.role !== 'admin') {
     alert('Akses ditolak. Anda bukan admin.');
-    window.location.href = 'user-dashboard.html';
+    await window.supabase.auth.signOut();
+    window.location.href = 'signin.html';
     return;
   }
 
-  currentAdminUser = user;
-  showSection('products');
+  currentUser = userData;
+  loadOrders();
+  loadProducts();
 }
 
-document.getElementById('addProductForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('prodName').value;
-  const price = parseInt(document.getElementById('prodPrice').value);
-  const image = document.getElementById('prodImage').value;
+async function loadOrders() {
+  const { data, error } = await window.supabase
+    .from('orders')
+    .select('*, products(name)')
+    .order('created_at', { ascending: false });
 
-  const { error } = await window.supabase.from('products').insert([{ name, price, image }]);
-  if (error) alert('Error adding product: ' + error.message);
-  else {
-    alert('Produk ditambahkan!');
-    loadProducts();
-    e.target.reset();
+  if (error) return console.error(error);
+
+  const container = document.getElementById('ordersContainer');
+  container.innerHTML = '';
+
+  if (data && data.length > 0) {
+    data.forEach(o => {
+      const div = document.createElement('div');
+      div.className = 'order';
+      div.innerHTML = `
+        <p><strong>Produk:</strong> ${o.products?.name || '-'}</p>
+        <p><strong>User:</strong> ${o.username}</p>
+        <p><strong>WhatsApp:</strong> ${o.whatsapp}</p>
+        <p><strong>Telegram:</strong> @${o.telegram_username || '-'}</p>
+        <p><strong>Status:</strong> ${o.status}</p>
+        <p><strong>Bukti TF:</strong> ${o.payment_proof ? `<a href="${o.payment_proof}" target="_blank">Lihat</a>` : '-'}</p>
+        <button onclick="updateOrderStatus(${o.id}, 'payment_received')">Pembayaran Masuk</button>
+        <button onclick="updateOrderStatus(${o.id}, 'payment_failed')">Pembayaran Tidak Masuk</button>
+        <button onclick="updateOrderStatus(${o.id}, 'done')">Pesanan Selesai</button>
+      `;
+      container.appendChild(div);
+    });
+  } else {
+    container.innerHTML = '<p>Tidak ada order.</p>';
   }
-});
+}
+
+async function updateOrderStatus(orderId, status) {
+  const { data, error } = await window.supabase
+    .from('orders')
+    .update({ status })
+    .eq('id', orderId)
+    .select('*, products(name)')
+    .single();
+
+  if (error) return alert('Error: ' + error.message);
+
+  // Notify Telegram
+  await fetch('/api/notify', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      orders: [{
+        username: data.username,
+        product_name: data.products?.name || '-',
+        whatsapp: data.whatsapp,
+        telegram_username: data.telegram_username,
+        payment_proof: data.payment_proof,
+        status: status
+      }]
+    })
+  });
+
+  alert('Status order diperbarui!');
+  loadOrders();
+}
 
 async function loadProducts() {
   const { data, error } = await window.supabase.from('products').select('*');
-  if (error) return console.error('Error loading products:', error);
+  if (error) return console.error(error);
 
-  const list = document.getElementById('productsList');
-  list.innerHTML = '';
+  const container = document.getElementById('productsContainer');
+  container.innerHTML = '';
   if (data && data.length > 0) {
     data.forEach(p => {
       const div = document.createElement('div');
@@ -52,80 +102,20 @@ async function loadProducts() {
       div.innerHTML = `
         <h3>${p.name}</h3>
         <p>Rp ${p.price.toLocaleString()}</p>
-        <img src="${p.image}" alt="${p.name}" style="width:150px; height:150px;">
-        <button onclick="deleteProduct(${p.id})">Hapus</button>
+        <img src="${p.image}" alt="${p.name}" style="width:100px;height:100px;">
       `;
-      list.appendChild(div);
+      container.appendChild(div);
     });
   } else {
-    list.innerHTML = '<p>Tidak ada produk.</p>';
+    container.innerHTML = '<p>Belum ada produk.</p>';
   }
-}
-
-async function deleteProduct(id) {
-  if (confirm('Yakin hapus produk ini?')) {
-    const { error } = await window.supabase.from('products').delete().eq('id', id);
-    if (error) alert('Error deleting: ' + error.message);
-    else loadProducts();
-  }
-}
-
-async function loadOrders() {
-  const { data, error } = await window.supabase.from('orders').select('*').order('created_at', { ascending: false });
-  if (error) return console.error('Error loading orders:', error);
-
-  const productIds = [...new Set((data || []).map(o => o.product_id))];
-  let productsMap = {};
-  if (productIds.length > 0) {
-    const { data: products } = await window.supabase.from('products').select('*').in('id', productIds);
-    if (products) {
-      productsMap = products.reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
-    }
-  }
-
-  const ordersList = document.getElementById('ordersList');
-  ordersList.innerHTML = '';
-  if (data && data.length > 0) {
-    data.forEach(o => {
-      const product = productsMap[o.product_id];
-      const div = document.createElement('div');
-      div.className = 'order';
-      div.innerHTML = `
-        <p><strong>Username:</strong> ${o.username || '-'}</p>
-        <p><strong>Nama Produk:</strong> ${product ? product.name : 'ID: ' + o.product_id}</p>
-        <p><strong>WhatsApp:</strong> ${o.whatsapp || '-'}</p>
-        <p><strong>Telegram:</strong> ${o.telegram_username ? '@' + o.telegram_username : '-'}</p>
-        <p><strong>Status:</strong> ${o.status}</p>
-        <button onclick="updateStatus(${o.id}, 'done')">Selesai</button>
-        <button onclick="updateStatus(${o.id}, 'cancelled')">Batalkan</button>
-      `;
-      ordersList.appendChild(div);
-    });
-  } else {
-    ordersList.innerHTML = '<p>Tidak ada pesanan.</p>';
-  }
-}
-
-async function updateStatus(id, status) {
-  const { error } = await window.supabase.from('orders').update({ status }).eq('id', id);
-  if (error) alert('Error update: ' + error.message);
-  else loadOrders();
-}
-
-function showSection(section) {
-  document.getElementById('products').style.display = 'none';
-  document.getElementById('orders').style.display = 'none';
-  document.getElementById(section).style.display = 'block';
-
-  if (section === 'products') loadProducts();
-  if (section === 'orders') loadOrders();
 }
 
 window.onload = () => {
-  checkAdminRole();
+  checkAdminAuth();
 };
 
 async function logout() {
   await window.supabase.auth.signOut();
   window.location.href = 'signin.html';
-    }
+}
