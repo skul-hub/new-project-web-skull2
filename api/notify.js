@@ -14,6 +14,7 @@ export default async function handler(req, res) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
+    // Pastikan BOT_TOKEN dan CHAT_ID terisi dari environment variables
     if (!BOT_TOKEN || !CHAT_ID) {
       console.error("TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_CHAT_ID is not set.");
       return res.status(500).json({ error: "Telegram bot credentials not configured." });
