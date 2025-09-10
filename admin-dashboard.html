@@ -11,44 +11,37 @@
 </head>
 <body>
   <header>
-    <nav class="navbar">
-      <div class="navbar-brand">
-        <h1>Admin - STORESKULL</h1>
-      </div>
-      <ul class="nav-links">
-        <li><a href="#orders" onclick="showSection('orders')">Orders</a></li>
-        <li><a href="#products" onclick="showSection('products')">Products</a></li>
-        <li><a href="#" onclick="logout()">Logout</a></li>
-      </ul>
+    <nav>
+      <button onclick="showSection('products')">Produk</button>
+      <button onclick="showSection('orders')">Pesanan</button>
+      <button onclick="logout()">Logout</button>
     </nav>
   </header>
 
   <main>
-    <!-- Orders Section (default visible) -->
-    <section id="orders">
-      <h2>Orders</h2>
-      <div id="ordersContainer"></div>
-    </section>
-
-    <!-- Products Section (hidden by default) -->
-    <section id="products" style="display:none;">
-      <h2>Products</h2>
-
-      <!-- Tambah Produk -->
+    <!-- Produk -->
+    <section id="products">
+      <h2>Tambah Produk</h2>
       <form id="addProductForm" onsubmit="addProduct(event)">
-        <input type="text" id="productName" placeholder="Nama Produk" required>
-        <input type="number" id="productPrice" placeholder="Harga" required>
-        <input type="text" id="productImage" placeholder="Link Gambar Produk">
+        <input type="text" id="productName" placeholder="Nama produk" required>
+        <input type="number" id="productPrice" placeholder="Harga (Rp)" required>
+        <input type="file" id="productImage" accept="image/*" required>
         <button type="submit">Tambah Produk</button>
       </form>
 
-      <!-- List Produk -->
-      <div id="productsContainer"></div>
+      <h2>Daftar Produk</h2>
+      <div id="productsList"></div>
+    </section>
+
+    <!-- Pesanan -->
+    <section id="orders" style="display:none;">
+      <h2>Daftar Pesanan</h2>
+      <div id="ordersList"></div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; 2025 SKULLHOSTING - STORESKULLHOSTING</p>
+    <p>&copy; 2025 STORESKULL</p>
   </footer>
 </body>
-                                                     </html>
+</html>
