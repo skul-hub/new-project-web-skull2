@@ -14,6 +14,7 @@
     <nav>
       <button onclick="showSection('products')">Produk</button>
       <button onclick="showSection('orders')">Pesanan</button>
+      <button onclick="showSection('settings')">Pengaturan</button> <!-- New button for settings -->
       <button onclick="logout()">Logout</button>
     </nav>
   </header>
@@ -37,6 +38,16 @@
     <section id="orders" style="display:none;">
       <h2>Daftar Pesanan</h2>
       <div id="ordersList"></div>
+    </section>
+
+    <!-- Pengaturan (New Section) -->
+    <section id="settings" style="display:none;">
+      <h2>Pengaturan QRIS</h2>
+      <form id="qrisSettingsForm" onsubmit="updateQrisSettings(event)">
+        <label for="qrisImageUrl">URL Gambar QRIS:</label>
+        <input type="url" id="qrisImageUrl" placeholder="https://example.com/qris.png" required>
+        <button type="submit">Simpan Pengaturan QRIS</button>
+      </form>
     </section>
   </main>
 
