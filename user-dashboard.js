@@ -2,6 +2,7 @@
 let cart = [];
 let currentUser = null;
 let pendingCheckout = null;
+let uploadedProofUrl = null; // simpan bukti transfer sebelum input email
 
 async function checkUserAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
@@ -28,21 +29,14 @@ async function checkUserAuth() {
 }
 
 async function loadProducts() {
-  const { data, error } = await window.supabase
-    .from("products")
-    .select("*")
-    .eq("active", true);
-
+  const { data, error } = await window.supabase.from("products").select("*").eq("active", true);
   if (error) return console.error(error);
 
   const container = document.getElementById("productsContainer");
   container.innerHTML = "";
-
   if (data && data.length > 0) {
     data.forEach((p) => {
-      // Escape nama produk untuk mencegah error jika ada tanda kutip
       const safeName = p.name.replace(/'/g, "\\'");
-
       const div = document.createElement("div");
       div.className = "product";
       div.innerHTML = `
@@ -108,11 +102,7 @@ async function checkout() {
 }
 
 async function openQris() {
-  const { data, error } = await window.supabase
-    .from("settings")
-    .select("qris_image_url")
-    .single();
-
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
   if (error || !data || !data.qris_image_url) {
     alert("QRIS belum diatur oleh admin. Silakan hubungi admin.");
     return;
@@ -143,20 +133,32 @@ async function confirmPayment() {
     alert("Gagal upload bukti: " + upErr.message);
     return;
   }
-
   const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
-  const proofUrl = urlData.publicUrl;
+  uploadedProofUrl = urlData.publicUrl;
 
-  if (!pendingCheckout) return alert("Tidak ada transaksi yang tertunda.");
+  // Tutup modal QRIS dan buka modal email
+  closeQris();
+  document.getElementById("emailModal").style.display = "flex";
+}
+
+function closeEmail() {
+  document.getElementById("emailModal").style.display = "none";
+  uploadedProofUrl = null;
+  pendingCheckout = null;
+}
+
+async function submitEmail() {
+  const email = document.getElementById("emailInput").value.trim();
+  if (!email || !email.includes("@")) return alert("Masukkan email yang valid.");
 
   let ordersToNotify = [];
 
   if (pendingCheckout.mode === "single") {
-    const order = await createOrder(pendingCheckout.item, proofUrl);
+    const order = await createOrder(pendingCheckout.item, uploadedProofUrl, email);
     if (order) ordersToNotify.push(order);
   } else {
     for (const p of cart) {
-      const order = await createOrder(p, proofUrl);
+      const order = await createOrder(p, uploadedProofUrl, email);
       if (order) ordersToNotify.push(order);
     }
     cart = [];
@@ -171,24 +173,21 @@ async function confirmPayment() {
     });
   }
 
-  closeQris();
-  alert("✅ Pesanan dibuat! Admin akan konfirmasi.");
+  document.getElementById("emailModal").style.display = "none";
+  alert("✅ Pesanan dibuat! Admin akan konfirmasi.\n\n📧 Produk akan dikirim ke email yang Anda masukkan.");
   loadHistory();
 }
 
-async function createOrder(p, proofUrl) {
-  const { data, error } = await window.supabase
-    .from("orders")
-    .insert([{
-      product_id: p.id,
-      user_id: currentUser.id,
-      username: currentUser.username,
-      payment_method: "qris",
-      payment_proof: proofUrl,
-      status: "waiting_confirmation",
-    }])
-    .select()
-    .single();
+async function createOrder(p, proofUrl, email) {
+  const { data, error } = await window.supabase.from("orders").insert([{
+    product_id: p.id,
+    user_id: currentUser.id,
+    username: currentUser.username,
+    payment_method: "qris",
+    payment_proof: proofUrl,
+    contact_email: email,
+    status: "waiting_confirmation",
+  }]).select().single();
 
   if (error) {
     alert("Gagal membuat order untuk " + p.name + ": " + error.message);
@@ -201,6 +200,7 @@ async function createOrder(p, proofUrl) {
     product_name: p.name,
     payment_method: "qris",
     payment_proof: proofUrl,
+    contact_email: email,
     status: "waiting_confirmation",
   };
 }
@@ -228,6 +228,7 @@ async function loadHistory() {
         <p><strong>Produk:</strong> ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
         <p><strong>Status:</strong> ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
         <p><strong>Metode Pembayaran:</strong> ${o.payment_method.toUpperCase()}</p>
+        <p><strong>Email:</strong> ${o.contact_email || "-"}</p>
         <p><strong>Bukti Transfer:</strong> ${
           o.payment_proof
             ? `<a href="${o.payment_proof}" target="_blank">Lihat Bukti</a>`
