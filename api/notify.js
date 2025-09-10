@@ -1,9 +1,10 @@
 // api/notify.js
-// Ini adalah file untuk backend (misalnya, Vercel Function, Netlify Function, atau Express route)
-// BUKAN untuk dijalankan langsung di browser.
+// Digunakan di server (Vercel Function, Netlify Function, atau Express route)
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
   try {
     const { orders } = req.body;
@@ -14,19 +15,17 @@ export default async function handler(req, res) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
-    // Pastikan BOT_TOKEN dan CHAT_ID terisi dari environment variables
     if (!BOT_TOKEN || !CHAT_ID) {
       console.error("TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_CHAT_ID is not set.");
       return res.status(500).json({ error: "Telegram bot credentials not configured." });
     }
 
     for (const o of orders) {
-      let caption = "";
-
-      // Escape HTML entities for safety, though for simple text it might not be strictly necessary
-      // but good practice if user-generated content is involved.
+      // Escape HTML untuk keamanan
       const escapeHtml = (text) => {
+        if (!text) return "";
         return text
+          .toString()
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
@@ -34,11 +33,14 @@ export default async function handler(req, res) {
           .replace(/'/g, "&#039;");
       };
 
-      const orderId = escapeHtml(String(o.id));
+      const orderId = escapeHtml(o.id);
       const username = escapeHtml(o.username);
       const productName = escapeHtml(o.product_name);
       const paymentMethod = escapeHtml(o.payment_method);
-      const status = escapeHtml(o.status.replace(/_/g, ' ').toUpperCase()); // Format status for display
+      const contactEmail = escapeHtml(o.contact_email || "-");
+      const status = escapeHtml(o.status.replace(/_/g, " ").toUpperCase());
+
+      let caption = "";
 
       if (o.status === "waiting_confirmation") {
         caption = `
@@ -47,6 +49,7 @@ export default async function handler(req, res) {
 🆔 Order ID: <code>${orderId}</code>
 👤 User: <b>${username}</b>
 📦 Produk: <b>${productName}</b>
+📧 Email: <b>${contactEmail}</b>
 💳 Metode: <b>${paymentMethod}</b>
 📄 Status: <b>Pending Konfirmasi</b>
         `;
@@ -57,13 +60,15 @@ export default async function handler(req, res) {
 🆔 Order ID: <code>${orderId}</code>
 👤 User: <b>${username}</b>
 📦 Produk: <b>${productName}</b>
+📧 Email: <b>${contactEmail}</b>
 📄 Status: <b>${status}</b>
         `;
       }
 
+      // Kirim ke Telegram
+      let response;
       if (o.payment_proof) {
-        // Send photo with caption
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -74,8 +79,7 @@ export default async function handler(req, res) {
           }),
         });
       } else {
-        // Send text message
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -84,6 +88,11 @@ export default async function handler(req, res) {
             parse_mode: "HTML",
           }),
         });
+      }
+
+      const result = await response.json();
+      if (!result.ok) {
+        console.error("Telegram API error:", result);
       }
     }
 
