@@ -8,6 +8,34 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="admin-dashboard.js" defer></script>
+  <style>
+    /* Tambahan styling agar dropdown + tombol rapi */
+    .order select {
+      margin-right: 0.5rem;
+      min-width: 200px;
+    }
+
+    .order-actions {
+      margin-top: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .order-actions button {
+      background: #238636;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .order-actions button:hover {
+      background: #2ea043;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -43,8 +71,6 @@
     <!-- Pengaturan -->
     <section id="settings" style="display:none;">
       <h2>Pengaturan QRIS</h2>
-
-      <!-- Form untuk Upload Gambar QRIS -->
       <form id="uploadQrisForm" onsubmit="uploadQrisImage(event)">
         <label for="qrisImageFile">Upload Gambar QRIS Baru:</label>
         <input type="file" id="qrisImageFile" accept="image/*" required>
@@ -56,7 +82,6 @@
         <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width: 200px; height: auto; border: 1px solid #238636; border-radius: 8px; display: none;">
         <p id="noQrisMessage" style="color: #a0aec0;">Belum ada gambar QRIS diatur.</p>
       </div>
-
     </section>
   </main>
 
