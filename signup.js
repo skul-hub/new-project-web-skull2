@@ -18,32 +18,21 @@ async function signup(event) {
     return;
   }
 
-  // --- START PERUBAHAN/PENINGKATAN ROBUSTNESS ---
-  // Pastikan objek user ada dan valid sebelum mencoba menyisipkan ke tabel public.users.
-  // Ini menangani skenario langka di mana signUp berhasil tanpa error,
-  // tetapi objek user mungkin tidak dikembalikan dengan benar.
+  // --- START PERUBAHAN PENTING ---
+  // Kode untuk INSERT ke public.users DIHAPUS karena sekarang ditangani oleh trigger database.
+  // Pengecekan data.user tetap dipertahankan untuk robustness.
   if (!data || !data.user || !data.user.id) {
     alert("Registrasi berhasil, tetapi data pengguna tidak lengkap. Silakan coba login.");
     window.location.href = "signin.html";
     return;
   }
-  // --- END PERUBAHAN/PENINGKATAN ROBUSTNESS ---
+  // --- END PERUBAHAN PENTING ---
 
-  // After successful signup, insert user data into 'users' table
-  const { error: insertError } = await window.supabase
-    .from("users")
-    .insert([
-      { id: data.user.id, email: data.user.email, username: username, role: "user" },
-    ]);
+  // alert("Registrasi berhasil, silakan login!"); // Ini akan dipindahkan ke bawah
+  // window.location.href = "signin.html"; // Ini akan dipindahkan ke bawah
 
-  if (insertError) {
-    alert("Gagal menyimpan data user: " + insertError.message);
-    // Optionally, you might want to delete the auth user if this fails.
-    // Note: Deleting auth user requires a service role key, which should NOT be exposed client-side.
-    // The line below is commented out for security reasons in a client-side script.
-    // await window.supabase.auth.admin.deleteUser(data.user.id);
-    return;
-  }
+  // Setelah pendaftaran auth berhasil, kita tidak perlu lagi melakukan INSERT manual ke public.users.
+  // Trigger database 'on_auth_user_created' akan menanganinya secara otomatis.
 
   alert("Registrasi berhasil, silakan login!");
   window.location.href = "signin.html";
