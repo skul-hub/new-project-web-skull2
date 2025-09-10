@@ -28,21 +28,29 @@ async function checkUserAuth() {
 }
 
 async function loadProducts() {
-  const { data, error } = await window.supabase.from("products").select("*").eq("active", true);
+  const { data, error } = await window.supabase
+    .from("products")
+    .select("*")
+    .eq("active", true);
+
   if (error) return console.error(error);
 
   const container = document.getElementById("productsContainer");
   container.innerHTML = "";
+
   if (data && data.length > 0) {
     data.forEach((p) => {
+      // Escape nama produk untuk mencegah error jika ada tanda kutip
+      const safeName = p.name.replace(/'/g, "\\'");
+
       const div = document.createElement("div");
       div.className = "product";
       div.innerHTML = `
         <h3>${p.name}</h3>
         <p>Rp ${p.price.toLocaleString()}</p>
         <img src="${p.image}" alt="${p.name}">
-        <button onclick="buyNow(${p.id}, '${p.name}', ${p.price})">Beli Sekarang</button>
-        <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Tambah ke Cart</button>
+        <button onclick="buyNow('${p.id}', '${safeName}', ${p.price})">Beli Sekarang</button>
+        <button onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Tambah ke Cart</button>
       `;
       container.appendChild(div);
     });
@@ -52,7 +60,6 @@ async function loadProducts() {
 }
 
 function addToCart(id, name, price) {
-  // Check if item already in cart
   const existingItem = cart.find(item => item.id === id);
   if (existingItem) {
     alert("Produk ini sudah ada di keranjang!");
@@ -101,7 +108,11 @@ async function checkout() {
 }
 
 async function openQris() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
+  const { data, error } = await window.supabase
+    .from("settings")
+    .select("qris_image_url")
+    .single();
+
   if (error || !data || !data.qris_image_url) {
     alert("QRIS belum diatur oleh admin. Silakan hubungi admin.");
     return;
@@ -120,8 +131,7 @@ async function confirmPayment() {
   const file = document.getElementById("proofFile").files[0];
   if (!file) return alert("Upload bukti transfer dulu.");
 
-  // Optional: Validate file size
-  if (file.size > 2 * 1024 * 1024) { // Max 2MB
+  if (file.size > 2 * 1024 * 1024) {
     alert("Ukuran bukti transfer terlalu besar. Maksimal 2MB.");
     return;
   }
@@ -133,6 +143,7 @@ async function confirmPayment() {
     alert("Gagal upload bukti: " + upErr.message);
     return;
   }
+
   const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
   const proofUrl = urlData.publicUrl;
 
@@ -166,14 +177,18 @@ async function confirmPayment() {
 }
 
 async function createOrder(p, proofUrl) {
-  const { data, error } = await window.supabase.from("orders").insert([{
-    product_id: p.id,
-    user_id: currentUser.id,
-    username: currentUser.username,
-    payment_method: "qris",
-    payment_proof: proofUrl,
-    status: "waiting_confirmation",
-  }]).select().single();
+  const { data, error } = await window.supabase
+    .from("orders")
+    .insert([{
+      product_id: p.id,
+      user_id: currentUser.id,
+      username: currentUser.username,
+      payment_method: "qris",
+      payment_proof: proofUrl,
+      status: "waiting_confirmation",
+    }])
+    .select()
+    .single();
 
   if (error) {
     alert("Gagal membuat order untuk " + p.name + ": " + error.message);
@@ -192,10 +207,10 @@ async function createOrder(p, proofUrl) {
 
 async function loadHistory() {
   const { data, error } = await window.supabase
-    .from("orders_view") // Use the view to get product details
+    .from("orders_view")
     .select("*")
     .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false }); // Order by creation date
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Error loading order history:", error);
