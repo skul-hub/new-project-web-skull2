@@ -14,7 +14,7 @@
     <nav>
       <button onclick="showSection('products')">Produk</button>
       <button onclick="showSection('orders')">Pesanan</button>
-      <button onclick="showSection('settings')">Pengaturan</button> <!-- New button for settings -->
+      <button onclick="showSection('settings')">Pengaturan</button>
       <button onclick="logout()">Logout</button>
     </nav>
   </header>
@@ -40,14 +40,23 @@
       <div id="ordersList"></div>
     </section>
 
-    <!-- Pengaturan (New Section) -->
+    <!-- Pengaturan -->
     <section id="settings" style="display:none;">
       <h2>Pengaturan QRIS</h2>
-      <form id="qrisSettingsForm" onsubmit="updateQrisSettings(event)">
-        <label for="qrisImageUrl">URL Gambar QRIS:</label>
-        <input type="url" id="qrisImageUrl" placeholder="https://example.com/qris.png" required>
-        <button type="submit">Simpan Pengaturan QRIS</button>
+
+      <!-- Form untuk Upload Gambar QRIS -->
+      <form id="uploadQrisForm" onsubmit="uploadQrisImage(event)">
+        <label for="qrisImageFile">Upload Gambar QRIS Baru:</label>
+        <input type="file" id="qrisImageFile" accept="image/*" required>
+        <button type="submit">Upload & Simpan QRIS</button>
       </form>
+
+      <div style="margin-top: 20px;">
+        <h3>QRIS Saat Ini:</h3>
+        <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width: 200px; height: auto; border: 1px solid #238636; border-radius: 8px; display: none;">
+        <p id="noQrisMessage" style="color: #a0aec0;">Belum ada gambar QRIS diatur.</p>
+      </div>
+
     </section>
   </main>
 
