@@ -14,7 +14,54 @@ body {
   flex-direction: column;
 }
 
-/* === Navbar === */
+/* === Header & Nav === */
+header {
+  background: #161b22;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #238636;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  color: #58a6ff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+header h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+header nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+header nav a,
+header nav button {
+  color: #e6edf3;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.3s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+header nav a:hover,
+header nav button:hover {
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.1);
+}
+
+/* Specific for user-dashboard navbar */
 .navbar {
   background: #161b22;
   padding: 1rem 2rem;
@@ -24,7 +71,7 @@ body {
   border-bottom: 2px solid #238636;
 }
 
-.navbar h1 a {
+.navbar-brand h1 a {
   color: #58a6ff;
   text-decoration: none;
   font-size: 1.8rem;
@@ -47,6 +94,30 @@ body {
 
 .nav-links li a:hover {
   color: #58a6ff;
+}
+
+
+/* === Main Content Area === */
+main {
+  flex-grow: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+section {
+  background: #161b22;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(88, 166, 255, 0.1);
+  margin-bottom: 2rem;
+}
+
+section h2 {
+  color: #58a6ff;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 /* === Hero Section (Index) === */
@@ -142,7 +213,73 @@ body {
   background: #2ea043;
 }
 
-/* === Products Grid === */
+.auth-section p {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.auth-section p a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.auth-section p a:hover {
+  text-decoration: underline;
+}
+
+/* === Forms (General) === */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="email"],
+form input[type="password"],
+form input[type="url"],
+form input[type="file"] {
+  padding: 0.8rem;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #0d1117;
+  color: #e6edf3;
+  font-size: 1rem;
+}
+
+form input:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+}
+
+form button[type="submit"] {
+  background: #238636;
+  color: white;
+  padding: 0.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+form button[type="submit"]:hover {
+  background: #2ea043;
+}
+
+/* === Products List (Admin) === */
+#productsList div {
+  background: #0d1117;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+}
+
+/* === Products Grid (User) === */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -151,12 +288,13 @@ body {
 }
 
 .product {
-  background: #161b22;
+  background: #0d1117;
   border-radius: 12px;
   padding: 1rem;
   text-align: center;
   box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #30363d;
 }
 
 .product:hover {
@@ -167,15 +305,21 @@ body {
 .product img {
   border-radius: 8px;
   margin: 1rem 0;
+  width: 150px; /* Fixed width */
+  height: 150px; /* Fixed height */
+  object-fit: cover; /* Cover the area, crop if necessary */
+  border: 1px solid #238636;
 }
 
 .product h3 {
   font-size: 1.2rem;
   color: #58a6ff;
+  margin-bottom: 0.5rem;
 }
 
 .product p {
   color: #a0aec0;
+  margin-bottom: 1rem;
 }
 
 .product button {
@@ -195,33 +339,184 @@ body {
   transform: scale(1.05);
 }
 
-/* === Orders === */
+/* === Cart & History === */
+#cartItems, #historyItems {
+  margin-top: 1.5rem;
+}
+
+#cartItems p, #historyItems p {
+  margin-bottom: 0.5rem;
+  color: #a0aec0;
+}
+
+#cartItems strong {
+  color: #e6edf3;
+  font-size: 1.1rem;
+}
+
+#cart button, #history button {
+  background: #238636;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-top: 1.5rem;
+}
+
+#cart button:hover, #history button:hover {
+  background: #2ea043;
+}
+
+/* === Orders (Admin & User History) === */
 .order {
-  background: #161b22;
+  background: #0d1117;
   padding: 1rem;
   margin: 1rem 0;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(35, 134, 54, 0.3);
+  border: 1px solid #238636;
 }
 
 .order p {
   margin: 0.3rem 0;
 }
 
-.order button {
-  background: #58a6ff;
-  color: #0d1117;
-  border: none;
+.order p strong {
+  color: #e6edf3;
+}
+
+.order a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+.order a:hover {
+  text-decoration: underline;
+}
+
+.order select {
+  padding: 0.5rem;
   border-radius: 6px;
-  padding: 0.4rem 1rem;
-  margin-right: 0.5rem;
+  border: 1px solid #30363d;
+  background: #161b22;
+  color: #e6edf3;
+  margin-top: 1rem;
   cursor: pointer;
-  font-weight: 500;
+}
+
+.order select:focus {
+  outline: none;
+  border-color: #58a6ff;
+}
+
+/* === QRIS Modal === */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: #161b22;
+  margin: auto;
+  padding: 2rem;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+}
+
+.modal-content h3 {
+  color: #58a6ff;
+  margin-bottom: 1rem;
+}
+
+.modal-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 8px;
+  border: 1px solid #238636;
+}
+
+.modal-content p {
+  margin-bottom: 1rem;
+  color: #a0aec0;
+}
+
+.modal-content input[type="file"] {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.5rem;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #e6edf3;
+}
+
+.modal-content .row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.modal-content button {
+  background: #238636;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
   transition: 0.3s;
 }
 
-.order button:hover {
-  background: #79c0ff;
+/* Add styles for the new QRIS upload form */
+#settings form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #e6edf3;
+  font-weight: 500;
+}
+
+#settings form input[type="file"] {
+  margin-bottom: 1rem;
+}
+
+#settings form button[type="submit"] {
+  width: auto; /* Adjust button width */
+  padding: 0.8rem 1.5rem;
+}
+
+/* ... (kode yang sudah ada) ... */
+
+.modal-content button:hover {
+  background: #2ea043;
+}
+
+.modal-content button:last-child {
+  background: #d32f2f; /* Red for cancel */
+}
+
+.modal-content button:last-child:hover {
+  background: #e57373;
 }
 
 /* === Footer === */
@@ -232,4 +527,4 @@ footer {
   background: #161b22;
   border-top: 2px solid #238636;
   color: #8b949e;
-  }
+}
