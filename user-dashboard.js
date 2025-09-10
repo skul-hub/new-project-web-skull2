@@ -114,7 +114,6 @@ async function openQris() {
 function closeQris() {
   document.getElementById("qrisModal").style.display = "none";
   document.getElementById("proofFile").value = "";
-  pendingCheckout = null;
 }
 
 async function confirmPayment() {
@@ -144,10 +143,15 @@ async function confirmPayment() {
 function closeEmail() {
   document.getElementById("emailModal").style.display = "none";
   uploadedProofUrl = null;
-  pendingCheckout = null;
 }
 
 async function submitEmail() {
+  // ✅ CEK kalau belum ada transaksi
+  if (!pendingCheckout) {
+    alert("Transaksi tidak ditemukan. Silakan ulangi proses checkout.");
+    return;
+  }
+
   const email = document.getElementById("emailInput").value.trim();
   if (!email || !email.includes("@")) return alert("Masukkan email yang valid.");
 
@@ -156,7 +160,7 @@ async function submitEmail() {
   if (pendingCheckout.mode === "single") {
     const order = await createOrder(pendingCheckout.item, uploadedProofUrl, email);
     if (order) ordersToNotify.push(order);
-  } else {
+  } else if (pendingCheckout.mode === "cart") {
     for (const p of cart) {
       const order = await createOrder(p, uploadedProofUrl, email);
       if (order) ordersToNotify.push(order);
@@ -176,6 +180,10 @@ async function submitEmail() {
   document.getElementById("emailModal").style.display = "none";
   alert("✅ Pesanan dibuat! Admin akan konfirmasi.\n\n📧 Produk akan dikirim ke email yang Anda masukkan.");
   loadHistory();
+
+  // reset setelah berhasil
+  pendingCheckout = null;
+  uploadedProofUrl = null;
 }
 
 async function createOrder(p, proofUrl, email) {
