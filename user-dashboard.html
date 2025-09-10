@@ -16,9 +16,9 @@
         <h1><a href="index.html">STORESKULL</a></h1>
       </div>
       <ul class="nav-links">
-        <li><a href="#products" onclick="showSection('products')">Products</a></li>
-        <li><a href="#cart" onclick="showSection('cart')">Cart</a></li>
-        <li><a href="#history" onclick="showSection('history')">History</a></li>
+        <li><a href="#" onclick="showSection('products')">Products</a></li>
+        <li><a href="#" onclick="showSection('cart')">Cart</a></li>
+        <li><a href="#" onclick="showSection('history')">History</a></li>
         <li><a href="#" onclick="logout()">Logout</a></li>
       </ul>
     </nav>
@@ -45,8 +45,22 @@
     </section>
   </main>
 
+  <!-- QRIS Modal -->
+  <div id="qrisModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Scan QRIS untuk Pembayaran</h3>
+      <img id="qrisImage" alt="QRIS" style="width:250px;height:250px;object-fit:contain;">
+      <p>Setelah transfer, upload bukti pembayaran:</p>
+      <input type="file" id="proofFile" accept="image/*">
+      <div class="row">
+        <button onclick="confirmPayment()">Kirim</button>
+        <button onclick="closeQris()">Batal</button>
+      </div>
+    </div>
+  </div>
+
   <footer>
-    <p>&copy; 2025 SKULLHOSTING - STORESKULLHOSTING</p>
+    <p>&copy; 2025 STORESKULL</p>
   </footer>
 </body>
 </html>
