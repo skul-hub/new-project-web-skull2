@@ -1,4 +1,3 @@
-// user-dashboard.js
 let cart = [];
 let currentUser = null;
 let pendingCheckout = null;
