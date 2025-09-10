@@ -1,3 +1,4 @@
+// user-dashboard.js
 let cart = [];
 let currentUser = null;
 let pendingCheckout = null;
@@ -62,35 +63,48 @@ function addToCart(id, name, price) {
   alert("Ditambahkan ke cart!");
 }
 
-// Pastikan fungsi buyNow dan checkout ada dan tidak ada typo
-async function buyNow(pid, name, price) {
-  if (!currentUser) {
-    alert("Silakan login.");
-    return; // Penting: tambahkan return agar tidak melanjutkan jika belum login
+function updateCartDisplay() {
+  const total = cart.reduce((sum, p) => sum + p.price, 0);
+  const cartDiv = document.getElementById("cartItems");
+  cartDiv.innerHTML = "";
+
+  if (cart.length === 0) {
+    cartDiv.innerHTML = "<p>Keranjang kosong.</p>";
+  } else {
+    cart.forEach((p, index) => {
+      const item = document.createElement("p");
+      item.innerHTML = `${p.name} - Rp ${p.price.toLocaleString()} <button onclick="removeFromCart(${index})">Hapus</button>`;
+      cartDiv.appendChild(item);
+    });
+    cartDiv.innerHTML += `<p><strong>Total: Rp ${total.toLocaleString()}</strong></p>`;
   }
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  updateCartDisplay();
+  alert("Produk dihapus dari keranjang.");
+}
+
+// ========== QRIS FLOW ==========
+async function buyNow(pid, name, price) {
+  if (!currentUser) return alert("Silakan login.");
   pendingCheckout = { mode: "single", item: { id: pid, name, price } };
   await openQris();
 }
 
 async function checkout() {
-  if (cart.length === 0) {
-    alert("Keranjang kosong!");
-    return;
-  }
-  if (!currentUser) {
-    alert("Silakan login.");
-    return; // Penting: tambahkan return agar tidak melanjutkan jika belum login
-  }
+  if (cart.length === 0) return alert("Keranjang kosong!");
+  if (!currentUser) return alert("Silakan login.");
   pendingCheckout = { mode: "cart" };
   await openQris();
 }
 
-// Pastikan fungsi openQris ada dan tidak ada typo
 async function openQris() {
   const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
   if (error || !data || !data.qris_image_url) {
     alert("QRIS belum diatur oleh admin. Silakan hubungi admin.");
-    return; // Penting: tambahkan return agar tidak melanjutkan jika QRIS tidak ada
+    return;
   }
   document.getElementById("qrisImage").src = data.qris_image_url;
   document.getElementById("qrisModal").style.display = "flex";
@@ -139,7 +153,6 @@ async function confirmPayment() {
   }
 
   if (ordersToNotify.length > 0) {
-    // Pastikan URL ini benar untuk endpoint notify Anda
     await fetch("/api/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
