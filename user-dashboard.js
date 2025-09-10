@@ -40,7 +40,7 @@ async function loadProducts() {
       div.innerHTML = `
         <h3>${p.name}</h3>
         <p>Rp ${p.price.toLocaleString()}</p>
-        <img src="${p.image}" alt="${p.name}" style="width:150px; height:150px;">
+        <img src="${p.image}" alt="${p.name}">
         <button onclick="buyNow(${p.id}, '${p.name}', ${p.price})">Beli Sekarang</button>
         <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Tambah ke Cart</button>
       `;
@@ -52,6 +52,12 @@ async function loadProducts() {
 }
 
 function addToCart(id, name, price) {
+  // Check if item already in cart
+  const existingItem = cart.find(item => item.id === id);
+  if (existingItem) {
+    alert("Produk ini sudah ada di keranjang!");
+    return;
+  }
   cart.push({ id, name, price });
   updateCartDisplay();
   alert("Ditambahkan ke cart!");
@@ -65,13 +71,19 @@ function updateCartDisplay() {
   if (cart.length === 0) {
     cartDiv.innerHTML = "<p>Keranjang kosong.</p>";
   } else {
-    cart.forEach((p) => {
+    cart.forEach((p, index) => {
       const item = document.createElement("p");
-      item.textContent = `${p.name} - Rp ${p.price.toLocaleString()}`;
+      item.innerHTML = `${p.name} - Rp ${p.price.toLocaleString()} <button onclick="removeFromCart(${index})">Hapus</button>`;
       cartDiv.appendChild(item);
     });
     cartDiv.innerHTML += `<p><strong>Total: Rp ${total.toLocaleString()}</strong></p>`;
   }
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  updateCartDisplay();
+  alert("Produk dihapus dari keranjang.");
 }
 
 // ========== QRIS FLOW ==========
@@ -89,9 +101,9 @@ async function checkout() {
 }
 
 async function openQris() {
-  const { data, error } = await window.supabase.from("settings").select("*").single();
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
   if (error || !data || !data.qris_image_url) {
-    alert("QRIS belum diatur admin.");
+    alert("QRIS belum diatur oleh admin. Silakan hubungi admin.");
     return;
   }
   document.getElementById("qrisImage").src = data.qris_image_url;
@@ -108,6 +120,12 @@ async function confirmPayment() {
   const file = document.getElementById("proofFile").files[0];
   if (!file) return alert("Upload bukti transfer dulu.");
 
+  // Optional: Validate file size
+  if (file.size > 2 * 1024 * 1024) { // Max 2MB
+    alert("Ukuran bukti transfer terlalu besar. Maksimal 2MB.");
+    return;
+  }
+
   const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
   const path = `${currentUser.id}/${fileName}`;
   const { error: upErr } = await window.supabase.storage.from("proofs").upload(path, file);
@@ -118,16 +136,28 @@ async function confirmPayment() {
   const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
   const proofUrl = urlData.publicUrl;
 
-  if (!pendingCheckout) return alert("Tidak ada transaksi.");
+  if (!pendingCheckout) return alert("Tidak ada transaksi yang tertunda.");
+
+  let ordersToNotify = [];
 
   if (pendingCheckout.mode === "single") {
-    await createOrder(pendingCheckout.item, proofUrl);
+    const order = await createOrder(pendingCheckout.item, proofUrl);
+    if (order) ordersToNotify.push(order);
   } else {
     for (const p of cart) {
-      await createOrder(p, proofUrl);
+      const order = await createOrder(p, proofUrl);
+      if (order) ordersToNotify.push(order);
     }
     cart = [];
     updateCartDisplay();
+  }
+
+  if (ordersToNotify.length > 0) {
+    await fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orders: ordersToNotify }),
+    });
   }
 
   closeQris();
@@ -136,7 +166,7 @@ async function confirmPayment() {
 }
 
 async function createOrder(p, proofUrl) {
-  const { error, data } = await window.supabase.from("orders").insert([{
+  const { data, error } = await window.supabase.from("orders").insert([{
     product_id: p.id,
     user_id: currentUser.id,
     username: currentUser.username,
@@ -146,32 +176,31 @@ async function createOrder(p, proofUrl) {
   }]).select().single();
 
   if (error) {
-    alert("Gagal membuat order: " + error.message);
-    return;
+    alert("Gagal membuat order untuk " + p.name + ": " + error.message);
+    return null;
   }
 
-  await fetch("/api/notify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      orders: [{
-        id: data.id,
-        username: currentUser.username,
-        product_name: p.name,
-        payment_method: "qris",
-        payment_proof: proofUrl,
-        status: "waiting_confirmation",
-      }],
-    }),
-  });
+  return {
+    id: data.id,
+    username: currentUser.username,
+    product_name: p.name,
+    payment_method: "qris",
+    payment_proof: proofUrl,
+    status: "waiting_confirmation",
+  };
 }
 
 async function loadHistory() {
   const { data, error } = await window.supabase
-    .from("orders")
+    .from("orders_view") // Use the view to get product details
     .select("*")
-    .eq("user_id", currentUser.id);
-  if (error) return console.error(error);
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false }); // Order by creation date
+
+  if (error) {
+    console.error("Error loading order history:", error);
+    return;
+  }
 
   const historyDiv = document.getElementById("historyItems");
   historyDiv.innerHTML = "";
@@ -180,13 +209,16 @@ async function loadHistory() {
       const div = document.createElement("div");
       div.className = "order";
       div.innerHTML = `
-        <p>Produk ID: ${o.product_id}</p>
-        <p>Status: ${o.status}</p>
-        <p>Bukti Transfer: ${
+        <p><strong>Order ID:</strong> ${o.id}</p>
+        <p><strong>Produk:</strong> ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
+        <p><strong>Status:</strong> ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
+        <p><strong>Metode Pembayaran:</strong> ${o.payment_method.toUpperCase()}</p>
+        <p><strong>Bukti Transfer:</strong> ${
           o.payment_proof
-            ? `<a href="${o.payment_proof}" target="_blank">Lihat</a>`
+            ? `<a href="${o.payment_proof}" target="_blank">Lihat Bukti</a>`
             : "-"
         }</p>
+        <p><strong>Tanggal Pesan:</strong> ${new Date(o.created_at).toLocaleString()}</p>
       `;
       historyDiv.appendChild(div);
     });
