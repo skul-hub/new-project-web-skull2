@@ -53,25 +53,24 @@
       <p>Setelah transfer, upload bukti pembayaran:</p>
       <input type="file" id="proofFile" accept="image/*">
       <div class="row">
-        <button onclick="confirmPayment()">Kirim</button>
-        <button onclick="closeQris()">Batal</button>
+        <button type="button" onclick="confirmPayment()">Kirim</button>
+        <button type="button" onclick="closeQris()">Batal</button>
       </div>
     </div>
   </div>
 
-<!-- Email Modal -->
-<div id="emailModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <h3>Masukkan Email Anda</h3>
-    <p style="color:red;"><strong>⚠️ Pastikan email aktif!</strong> Produk akan dikirim ke email ini.</p>
-    <input type="email" id="emailInput" placeholder="contoh: nama@email.com" required>
-    <div class="row">
-      <button onclick="submitEmail()">Kirim</button>
-      <button onclick="closeEmail()">Batal</button>
+  <!-- ✅ Email Modal Baru -->
+  <div id="emailModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Masukkan Email Anda</h3>
+      <p style="color:red;"><strong>⚠️ Pastikan email aktif!</strong> Produk akan dikirim ke email ini.</p>
+      <input type="email" id="emailInput" placeholder="contoh: nama@email.com" required>
+      <div class="row">
+        <button type="button" onclick="submitEmail()">Kirim</button>
+        <button type="button" onclick="closeEmail()">Batal</button>
+      </div>
     </div>
   </div>
-</div>
-
 
   <footer>
     <p>&copy; 2025 STORESKULL</p>
