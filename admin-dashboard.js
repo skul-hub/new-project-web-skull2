@@ -157,6 +157,7 @@ async function updateOrderStatus(orderId, newStatus) {
     console.error("Error fetching product name for notification:", productError);
   }
 
+  // Pastikan URL ini benar untuk endpoint notify Anda
   await fetch("/api/notify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
