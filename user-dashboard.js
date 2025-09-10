@@ -136,7 +136,7 @@ async function confirmPayment() {
   const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
   uploadedProofUrl = urlData.publicUrl;
 
-  // Tutup modal QRIS dan buka modal email
+  // Tutup modal QRIS, buka modal email
   closeQris();
   document.getElementById("emailModal").style.display = "flex";
 }
