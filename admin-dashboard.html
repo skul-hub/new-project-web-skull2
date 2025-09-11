@@ -82,6 +82,13 @@
         <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width: 200px; height: auto; border: 1px solid #238636; border-radius: 8px; display: none;">
         <p id="noQrisMessage" style="color: #a0aec0;">Belum ada gambar QRIS diatur.</p>
       </div>
+
+      <h2 style="margin-top: 3rem;">Pengaturan Pengumuman</h2>
+      <form id="announcementForm" onsubmit="saveAnnouncement(event)">
+        <label for="announcementText">Teks Pengumuman:</label>
+        <textarea id="announcementText" rows="5" placeholder="Masukkan teks pengumuman di sini..."></textarea>
+        <button type="submit">Simpan Pengumuman</button>
+      </form>
     </section>
   </main>
 
