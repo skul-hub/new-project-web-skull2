@@ -3,6 +3,7 @@ let cart = [];
 let currentUser = null;
 let pendingCheckout = null;
 let uploadedProofUrl = null; // simpan bukti transfer sebelum input email
+let allProducts = []; // Variabel baru untuk menyimpan semua produk
 
 async function checkUserAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
@@ -33,10 +34,15 @@ async function loadProducts() {
   const { data, error } = await window.supabase.from("products").select("*").eq("active", true);
   if (error) return console.error(error);
 
+  allProducts = data || []; // Simpan semua produk yang dimuat
+  displayProducts(allProducts); // Tampilkan semua produk awalnya
+}
+
+function displayProducts(productsToDisplay) {
   const container = document.getElementById("productsContainer");
   container.innerHTML = "";
-  if (data && data.length > 0) {
-    data.forEach((p) => {
+  if (productsToDisplay && productsToDisplay.length > 0) {
+    productsToDisplay.forEach((p) => {
       const safeName = p.name.replace(/'/g, "\\'");
       const div = document.createElement("div");
       div.className = "product";
@@ -50,9 +56,18 @@ async function loadProducts() {
       container.appendChild(div);
     });
   } else {
-    container.innerHTML = "<p>Tidak ada produk.</p>";
+    container.innerHTML = "<p>Tidak ada produk yang ditemukan.</p>";
   }
 }
+
+function filterProducts() {
+  const searchTerm = document.getElementById("productSearch").value.toLowerCase();
+  const filtered = allProducts.filter(product =>
+    product.name.toLowerCase().includes(searchTerm)
+  );
+  displayProducts(filtered);
+}
+
 
 function addToCart(id, name, price) {
   const existingItem = cart.find(item => item.id === id);
@@ -277,7 +292,10 @@ function showSection(section) {
   document.getElementById("history").style.display = "none";
   document.getElementById(section).style.display = "block";
 
-  if (section === "products") loadProducts();
+  if (section === "products") {
+    loadProducts(); // Memuat semua produk saat masuk ke bagian produk
+    document.getElementById("productSearch").value = ""; // Kosongkan kolom pencarian
+  }
   if (section === "cart") updateCartDisplay();
   if (section === "history") loadHistory();
 }
