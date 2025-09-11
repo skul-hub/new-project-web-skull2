@@ -13,12 +13,12 @@
   <header>
     <nav class="navbar">
       <div class="navbar-brand">
-        <h1><a href="user-dashboard.html">SKULL STORE</a></h1>
+        <h1><a href="user-dashboard.html">STORESKULL</a></h1>
       </div>
       <ul class="nav-links">
-        <li><a href="#" onclick="showSection('products')">ProduK</a></li>
-        <li><a href="#" onclick="showSection('cart')">Keranjang</a></li>
-        <li><a href="#" onclick="showSection('history')">History Pembelian</a></li>
+        <li><a href="#" onclick="showSection('products')">Products</a></li>
+        <li><a href="#" onclick="showSection('cart')">Cart</a></li>
+        <li><a href="#" onclick="showSection('history')">History</a></li>
         <li><a href="#" onclick="logout()">Logout</a></li>
       </ul>
     </nav>
@@ -30,9 +30,15 @@
       <p id="announcementMessage"></p>
     </div>
 
+    <!-- Kategori Produk -->
+    <div class="product-categories">
+      <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
+      <button class="category-button" onclick="filterProductsByCategory('game_account')">Jual Akun Game</button>
+    </div>
+
     <!-- Produk -->
     <section id="products">
-      <h2>Produk</h2>
+      <h2>Products</h2>
       <!-- Tambahkan input pencarian di sini -->
       <div class="search-container">
         <input type="text" id="productSearch" placeholder="Cari produk..." onkeyup="filterProducts()">
@@ -42,14 +48,14 @@
 
     <!-- Keranjang -->
     <section id="cart" style="display:none;">
-      <h2>Keranjang Kamu</h2>
+      <h2>Your Cart</h2>
       <div id="cartItems"></div>
       <button onclick="checkout()">Checkout</button>
     </section>
 
     <!-- Riwayat Pesanan -->
     <section id="history" style="display:none;">
-      <h2>History Pembelian</h2>
+      <h2>Order History</h2>
       <div id="historyItems"></div>
     </section>
   </main>
