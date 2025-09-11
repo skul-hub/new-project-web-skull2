@@ -51,7 +51,7 @@ function displayProducts(productsToDisplay) {
         <p>Rp ${p.price.toLocaleString()}</p>
         <img src="${p.image}" alt="${p.name}">
         <button onclick="buyNow('${p.id}', '${safeName}', ${p.price})">Beli Sekarang</button>
-        <button onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Tambah ke Cart</button>
+        <button onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Tambah ke Keranjang</button>
       `;
       container.appendChild(div);
     });
@@ -77,7 +77,7 @@ function addToCart(id, name, price) {
   }
   cart.push({ id, name, price });
   updateCartDisplay();
-  alert("Ditambahkan ke cart!");
+  alert("Ditambahkan ke Keranjang!");
 }
 
 function updateCartDisplay() {
