@@ -54,6 +54,12 @@
       <form id="addProductForm" onsubmit="addProduct(event)">
         <input type="text" id="productName" placeholder="Nama produk" required>
         <input type="number" id="productPrice" placeholder="Harga (Rp)" required>
+        <select id="productCategory" required>
+          <option value="">Pilih Kategori</option>
+          <option value="panel_pterodactyl">Panel Pterodactyl</option>
+          <option value="game_account">Jual Akun Game</option>
+        </select>
+        <input type="number" id="productStock" placeholder="Stok (hanya untuk Akun Game)" min="0" value="0">
         <input type="file" id="productImage" accept="image/*" required>
         <!-- UPDATED: Added class="admin-button" -->
         <button type="submit" class="admin-button">Tambah Produk</button>
