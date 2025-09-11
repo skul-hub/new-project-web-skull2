@@ -55,7 +55,8 @@
         <input type="text" id="productName" placeholder="Nama produk" required>
         <input type="number" id="productPrice" placeholder="Harga (Rp)" required>
         <input type="file" id="productImage" accept="image/*" required>
-        <button type="submit">Tambah Produk</button>
+        <!-- UPDATED: Added class="admin-button" -->
+        <button type="submit" class="admin-button">Tambah Produk</button>
       </form>
 
       <h2>Daftar Produk</h2>
@@ -74,7 +75,8 @@
       <form id="uploadQrisForm" onsubmit="uploadQrisImage(event)">
         <label for="qrisImageFile">Upload Gambar QRIS Baru:</label>
         <input type="file" id="qrisImageFile" accept="image/*" required>
-        <button type="submit">Upload & Simpan QRIS</button>
+        <!-- UPDATED: Added class="admin-button" -->
+        <button type="submit" class="admin-button">Upload & Simpan QRIS</button>
       </form>
 
       <div style="margin-top: 20px;">
@@ -87,7 +89,8 @@
       <form id="announcementForm" onsubmit="saveAnnouncement(event)">
         <label for="announcementText">Teks Pengumuman:</label>
         <textarea id="announcementText" rows="5" placeholder="Masukkan teks pengumuman di sini..."></textarea>
-        <button type="submit">Simpan Pengumuman</button>
+        <!-- UPDATED: Added class="admin-button" -->
+        <button type="submit" class="admin-button">Simpan Pengumuman</button>
       </form>
     </section>
   </main>
