@@ -207,24 +207,34 @@ async function saveOrderStatus(orderId) {
 }
 
 async function loadQrisSettings() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url, announcement").single();
   const currentQrisImage = document.getElementById("currentQrisImage");
   const noQrisMessage = document.getElementById("noQrisMessage");
+  const announcementTextarea = document.getElementById("announcementText");
 
   if (error && error.code !== 'PGRST116') {
-    console.error("Error loading QRIS settings:", error);
+    console.error("Error loading settings:", error);
     currentQrisImage.style.display = 'none';
     noQrisMessage.style.display = 'block';
+    announcementTextarea.value = "";
     return;
   }
 
-  if (data && data.qris_image_url) {
-    currentQrisImage.src = data.qris_image_url;
-    currentQrisImage.style.display = 'block';
-    noQrisMessage.style.display = 'none';
+  if (data) {
+    if (data.qris_image_url) {
+      currentQrisImage.src = data.qris_image_url;
+      currentQrisImage.style.display = 'block';
+      noQrisMessage.style.display = 'none';
+    } else {
+      currentQrisImage.style.display = 'none';
+      noQrisMessage.style.display = 'block';
+    }
+    // Set teks pengumuman
+    announcementTextarea.value = data.announcement || "";
   } else {
     currentQrisImage.style.display = 'none';
     noQrisMessage.style.display = 'block';
+    announcementTextarea.value = "";
   }
 }
 
@@ -281,6 +291,37 @@ async function uploadQrisImage(event) {
 
   alert("Gambar QRIS berhasil diupload dan disimpan!");
   document.getElementById("uploadQrisForm").reset();
+  loadQrisSettings();
+}
+
+async function saveAnnouncement(event) {
+  event.preventDefault();
+  const announcementText = document.getElementById("announcementText").value;
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ announcement: announcementText, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ announcement: announcementText }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan pengumuman: " + error.message);
+    return;
+  }
+
+  alert("Pengumuman berhasil disimpan!");
   loadQrisSettings();
 }
 
