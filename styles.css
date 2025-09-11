@@ -476,15 +476,58 @@ form button[type="submit"]:hover {
   color: #a0aec0;
 }
 
-.modal-content input[type="file"] {
+/* === Styling for file and email inputs in modals === */
+.modal-content input[type="file"],
+.modal-content input[type="email"] {
   display: block;
+  width: calc(100% - 2rem); /* Mengurangi padding agar tidak melebihi lebar modal */
   margin: 1rem auto;
-  padding: 0.5rem;
+  padding: 0.8rem; /* Tambah padding */
   background: #0d1117;
   border: 1px solid #30363d;
   border-radius: 8px;
   color: #e6edf3;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Efek transisi */
 }
+
+.modal-content input[type="file"]:focus,
+.modal-content input[type="email"]:focus {
+  outline: none;
+  border-color: #58a6ff; /* Warna border saat fokus */
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.5); /* Efek shadow saat fokus */
+}
+
+/* Styling for file input button (browser default) */
+.modal-content input[type="file"]::-webkit-file-upload-button {
+  background: #238636;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-content input[type="file"]::-webkit-file-upload-button:hover {
+  background: #2ea043;
+}
+
+/* For Firefox */
+.modal-content input[type="file"]::file-selector-button {
+  background: #238636;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-content input[type="file"]::file-selector-button:hover {
+  background: #2ea043;
+}
+
 
 .modal-content .row {
   display: flex;
@@ -655,5 +698,20 @@ footer {
   .modal-content button {
     padding: 0.6rem 1rem; /* Sesuaikan padding tombol modal */
     font-size: 0.9rem; /* Perkecil font tombol modal */
+  }
+
+  /* Adjust input file and email in modals for smaller screens */
+  .modal-content input[type="file"],
+  .modal-content input[type="email"] {
+    width: 100%; /* Ambil lebar penuh di mobile */
+    margin: 0.8rem auto; /* Sesuaikan margin */
+    padding: 0.6rem; /* Kurangi padding */
+    font-size: 0.9rem; /* Perkecil font */
+  }
+
+  .modal-content input[type="file"]::-webkit-file-upload-button,
+  .modal-content input[type="file"]::file-selector-button {
+    padding: 0.5rem 0.8rem; /* Sesuaikan padding tombol file */
+    font-size: 0.8rem; /* Perkecil font tombol file */
   }
 }
