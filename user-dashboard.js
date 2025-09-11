@@ -26,6 +26,7 @@ async function checkUserAuth() {
 
   currentUser = userData;
   showSection("products");
+  loadAnnouncement(); // Panggil fungsi untuk memuat pengumuman
 }
 
 async function loadProducts() {
@@ -248,6 +249,25 @@ async function loadHistory() {
     });
   } else {
     historyDiv.innerHTML = "<p>Belum ada riwayat pesanan.</p>";
+  }
+}
+
+async function loadAnnouncement() {
+  const { data, error } = await window.supabase.from("settings").select("announcement").single();
+  const announcementContainer = document.getElementById("announcementContainer");
+  const announcementMessage = document.getElementById("announcementMessage");
+
+  if (error && error.code !== 'PGRST116') {
+    console.error("Error loading announcement:", error);
+    announcementContainer.style.display = "none";
+    return;
+  }
+
+  if (data && data.announcement) {
+    announcementMessage.textContent = data.announcement;
+    announcementContainer.style.display = "block";
+  } else {
+    announcementContainer.style.display = "none";
   }
 }
 
