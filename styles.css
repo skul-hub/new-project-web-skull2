@@ -483,10 +483,10 @@ form button[type="submit"]:hover {
   width: calc(100% - 2rem); /* Mengurangi padding agar tidak melebihi lebar modal */
   margin: 1rem auto;
   padding: 0.8rem; /* Tambah padding */
-  background: #0d1117;
-  border: 1px solid #30363d;
+  background: #0d1117; /* Background gelap */
+  border: 1px solid #30363d; /* Border gelap */
   border-radius: 8px;
-  color: #e6edf3;
+  color: #e6edf3; /* Warna teks terang */
   font-size: 1rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Efek transisi */
 }
@@ -586,6 +586,31 @@ footer {
   border-top: 2px solid #238636;
   color: #8b949e;
 }
+
+/* Tambahan styling untuk search input */
+.search-container {
+  margin-bottom: 1.5rem;
+  text-align: center; /* Pusatkan input */
+}
+
+#productSearch {
+  width: 100%;
+  max-width: 400px; /* Batasi lebar agar tidak terlalu panjang di desktop */
+  padding: 0.8rem;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: #0d1117;
+  color: #e6edf3;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#productSearch:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+}
+
 
 /* ========================================================================== */
 /* ======================== MEDIA QUERIES FOR RESPONSIVENESS ================ */
@@ -713,5 +738,12 @@ footer {
   .modal-content input[type="file"]::file-selector-button {
     padding: 0.5rem 0.8rem; /* Sesuaikan padding tombol file */
     font-size: 0.8rem; /* Perkecil font tombol file */
+  }
+
+  #productSearch {
+    width: 100%; /* Ambil lebar penuh di mobile */
+    max-width: none; /* Hapus batasan max-width */
+    font-size: 0.9rem;
+    padding: 0.6rem;
   }
 }
