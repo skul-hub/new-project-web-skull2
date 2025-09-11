@@ -39,6 +39,9 @@ header h1 a {
 header nav {
   display: flex;
   gap: 1.5rem;
+  /* Tambahan untuk mobile: default desktop */
+  overflow-x: hidden; /* Sembunyikan scrollbar di desktop */
+  white-space: nowrap;
 }
 
 header nav a,
@@ -53,6 +56,7 @@ header nav button {
   font-size: 1rem;
   padding: 0.5rem 1rem;
   border-radius: 6px;
+  flex-shrink: 0; /* Mencegah item mengecil di desktop juga */
 }
 
 header nav a:hover,
@@ -69,6 +73,9 @@ header nav button:hover {
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #238636;
+  /* Tambahan untuk mobile: default desktop */
+  overflow-x: hidden; /* Sembunyikan scrollbar di desktop */
+  white-space: nowrap;
 }
 
 .navbar-brand h1 a {
@@ -77,12 +84,19 @@ header nav button:hover {
   font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: 2px;
+  flex-shrink: 0; /* Mencegah brand mengecil */
 }
 
 .nav-links {
   list-style: none;
   display: flex;
   gap: 1.5rem;
+  flex-grow: 1; /* Memungkinkan link mengambil sisa ruang */
+  justify-content: flex-end; /* Posisikan link ke kanan di desktop */
+}
+
+.nav-links li {
+  flex-shrink: 0; /* Mencegah item mengecil */
 }
 
 .nav-links li a {
@@ -90,10 +104,13 @@ header nav button:hover {
   text-decoration: none;
   font-weight: 500;
   transition: 0.3s;
+  padding: 0.5rem 1rem; /* Tambahkan padding untuk area klik yang lebih baik */
+  border-radius: 6px;
 }
 
 .nav-links li a:hover {
   color: #58a6ff;
+  background: rgba(88, 166, 255, 0.1);
 }
 
 
@@ -505,8 +522,6 @@ form button[type="submit"]:hover {
   padding: 0.8rem 1.5rem;
 }
 
-/* ... (kode yang sudah ada) ... */
-
 .modal-content button:hover {
   background: #2ea043;
 }
@@ -527,4 +542,118 @@ footer {
   background: #161b22;
   border-top: 2px solid #238636;
   color: #8b949e;
+}
+
+/* ========================================================================== */
+/* ======================== MEDIA QUERIES FOR RESPONSIVENESS ================ */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Header & Nav for general pages (index, signin, signup) */
+  header {
+    padding: 1rem; /* Kurangi padding */
+    flex-direction: column; /* Tumpuk elemen di mobile */
+    align-items: flex-start; /* Rata kiri */
+  }
+
+  header h1 {
+    margin-bottom: 0.5rem; /* Beri jarak antara judul dan nav */
+  }
+
+  header nav {
+    width: 100%; /* Ambil lebar penuh */
+    justify-content: flex-start; /* Mulai dari kiri */
+    overflow-x: auto; /* Memungkinkan scroll horizontal */
+    -webkit-overflow-scrolling: touch; /* Untuk scrolling yang lebih halus di iOS */
+    white-space: nowrap; /* Mencegah item baris baru */
+    padding-bottom: 0.5rem; /* Sedikit padding di bawah untuk scrollbar */
+    gap: 0.8rem; /* Kurangi jarak antar item */
+  }
+
+  header nav a,
+  header nav button {
+    padding: 0.5rem 0.8rem; /* Sesuaikan padding untuk tombol/link */
+    font-size: 0.9rem; /* Sedikit perkecil font */
+  }
+
+  /* Navbar for user-dashboard */
+  .navbar {
+    padding: 1rem; /* Kurangi padding */
+    flex-wrap: wrap; /* Izinkan wrap jika perlu, tapi nav-links akan scroll */
+    justify-content: center; /* Pusatkan konten */
+  }
+
+  .navbar-brand {
+    width: 100%; /* Ambil lebar penuh */
+    text-align: center; /* Pusatkan brand */
+    margin-bottom: 1rem; /* Beri jarak antara brand dan link */
+  }
+
+  .nav-links {
+    width: 100%; /* Ambil lebar penuh */
+    justify-content: flex-start; /* Mulai link dari kiri */
+    overflow-x: auto; /* Memungkinkan scroll horizontal */
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    padding-bottom: 0.5rem; /* Sedikit padding di bawah untuk scrollbar */
+    gap: 0.8rem; /* Kurangi jarak antar item */
+  }
+
+  .nav-links li a {
+    padding: 0.5rem 0.8rem; /* Sesuaikan padding untuk link */
+    font-size: 0.9rem; /* Sedikit perkecil font */
+  }
+
+  /* Main content area */
+  main {
+    padding: 1rem; /* Kurangi padding di main content */
+  }
+
+  section {
+    padding: 1.5rem; /* Kurangi padding di section */
+  }
+
+  /* Auth section */
+  .auth-section {
+    margin: 2rem auto; /* Kurangi margin atas/bawah */
+    padding: 1.5rem; /* Kurangi padding */
+  }
+
+  /* Product grid */
+  .products-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Sesuaikan ukuran produk */
+    gap: 1rem; /* Kurangi jarak antar produk */
+  }
+
+  .product img {
+    width: 120px; /* Perkecil gambar produk */
+    height: 120px;
+  }
+
+  .product h3 {
+    font-size: 1rem; /* Perkecil font judul produk */
+  }
+
+  .product p {
+    font-size: 0.9rem; /* Perkecil font harga produk */
+  }
+
+  .product button {
+    padding: 0.5rem 0.8rem; /* Sesuaikan padding tombol produk */
+    font-size: 0.85rem; /* Perkecil font tombol produk */
+  }
+
+  /* Modals */
+  .modal-content {
+    padding: 1.5rem; /* Kurangi padding modal */
+  }
+
+  .modal-content h3 {
+    font-size: 1.2rem; /* Perkecil font judul modal */
+  }
+
+  .modal-content button {
+    padding: 0.6rem 1rem; /* Sesuaikan padding tombol modal */
+    font-size: 0.9rem; /* Perkecil font tombol modal */
+  }
 }
