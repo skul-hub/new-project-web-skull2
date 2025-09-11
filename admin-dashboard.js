@@ -40,15 +40,26 @@ async function loadProducts() {
   if (data && data.length > 0) {
     data.forEach((p) => {
       const safeName = p.name.replace(/'/g, "\\'");
+      let stockInfo = '';
+      let stockButtons = '';
+      if (p.category === 'game_account') {
+        stockInfo = ` | Stok: <strong>${p.stock}</strong>`;
+        stockButtons = `
+          <button onclick="updateProductStock('${p.id}', ${p.stock - 1})" class="admin-button">-</button>
+          <button onclick="updateProductStock('${p.id}', ${p.stock + 1})" class="admin-button">+</button>
+        `;
+      }
+
       const div = document.createElement("div");
       div.innerHTML = `
-        <p><strong>${p.name}</strong> - Rp ${p.price.toLocaleString()}</p>
-        <!-- UPDATED: Added class="admin-button delete" -->
-        <button onclick="deleteProduct('${p.id}')" class="admin-button delete">🗑️ Hapus</button>
-        <!-- UPDATED: Added class="admin-button" -->
-        <button onclick="toggleProduct('${p.id}', ${p.active ? "false" : "true"})" class="admin-button">
-          ${p.active ? "Nonaktifkan" : "Aktifkan"}
-        </button>
+        <p><strong>${p.name}</strong> - Rp ${p.price.toLocaleString()} (${p.category === 'panel_pterodactyl' ? 'Panel Pterodactyl' : 'Akun Game'})${stockInfo}</p>
+        <div class="product-actions">
+          ${stockButtons}
+          <button onclick="deleteProduct('${p.id}')" class="admin-button delete">🗑️ Hapus</button>
+          <button onclick="toggleProduct('${p.id}', ${p.active ? "false" : "true"})" class="admin-button">
+            ${p.active ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+        </div>
       `;
       container.appendChild(div);
     });
@@ -61,10 +72,17 @@ async function addProduct(event) {
   event.preventDefault();
   const name = document.getElementById("productName").value;
   const price = parseInt(document.getElementById("productPrice").value, 10);
+  const category = document.getElementById("productCategory").value;
+  const stock = parseInt(document.getElementById("productStock").value, 10);
   const file = document.getElementById("productImage").files[0];
 
-  if (!name || !price || !file) {
+  if (!name || !price || !category || !file) {
     alert("Lengkapi semua field!");
+    return;
+  }
+
+  if (category === 'game_account' && (isNaN(stock) || stock < 0)) {
+    alert("Stok harus angka non-negatif untuk Akun Game.");
     return;
   }
 
@@ -83,7 +101,7 @@ async function addProduct(event) {
   const { data: urlData } = window.supabase.storage.from("product-images").getPublicUrl(fileName);
 
   const { error } = await window.supabase.from("products").insert([
-    { name, price, image: urlData.publicUrl, active: true },
+    { name, price, image: urlData.publicUrl, active: true, category, stock: category === 'game_account' ? stock : null },
   ]);
   if (error) {
     alert("Gagal tambah produk: " + error.message);
@@ -121,6 +139,26 @@ async function toggleProduct(id, newStatus) {
   alert(`Produk berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}.`);
   loadProducts();
 }
+
+async function updateProductStock(id, newStock) {
+  if (newStock < 0) {
+    alert("Stok tidak bisa kurang dari 0.");
+    return;
+  }
+  const { error } = await window.supabase
+    .from("products")
+    .update({ stock: newStock })
+    .eq("id", id);
+
+  if (error) {
+    alert("Gagal mengubah stok produk: " + error.message);
+    return;
+  }
+
+  alert("Stok produk berhasil diupdate.");
+  loadProducts();
+}
+
 
 async function loadOrders() {
   const { data, error } = await window.supabase
@@ -170,7 +208,7 @@ async function saveOrderStatus(orderId) {
     .from("orders")
     .update({ status: newStatus })
     .eq("id", orderId)
-    .select("id, user_id, product_id, status, payment_proof")
+    .select("id, user_id, product_id, status, payment_proof, contact_email") // Tambahkan contact_email
     .single();
 
   if (error) {
@@ -201,6 +239,7 @@ async function saveOrderStatus(orderId) {
         payment_proof: orderData.payment_proof,
         status: orderData.status,
         payment_method: "qris",
+        contact_email: orderData.contact_email, // Kirim contact_email
       }],
     }),
   });
