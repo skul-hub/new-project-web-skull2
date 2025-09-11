@@ -294,6 +294,17 @@ form button[type="submit"]:hover {
   margin-bottom: 0.5rem;
   border-radius: 8px;
   border: 1px solid #30363d;
+  /* NEW: Flexbox for alignment */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Sebarkan konten dan tombol */
+  flex-wrap: wrap; /* Izinkan wrap pada layar kecil */
+  gap: 0.5rem; /* Jarak antar item */
+}
+
+#productsList div p {
+  margin: 0; /* Hapus margin default paragraf */
+  flex-grow: 1; /* Biarkan paragraf mengambil ruang yang tersedia */
 }
 
 /* === Products Grid (User) === */
@@ -611,6 +622,43 @@ footer {
   box-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
 }
 
+/* NEW: Styling for admin dashboard buttons */
+.admin-button {
+  background: #238636; /* Warna hijau yang sama dengan tombol "Lanjutkan" */
+  color: white;
+  padding: 0.6rem 1.2rem; /* Sesuaikan padding */
+  font-size: 0.95rem; /* Sesuaikan ukuran font */
+  font-weight: 500;
+  border: none;
+  border-radius: 8px; /* Border radius yang sama */
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  margin-top: 0.5rem; /* Sedikit margin atas untuk pemisah */
+  margin-right: 0.5rem; /* Sedikit margin kanan antar tombol */
+  display: inline-block; /* Agar bisa berdampingan */
+}
+
+.admin-button:hover {
+  background: #2ea043; /* Warna hover yang sama */
+  transform: translateY(-2px); /* Efek hover yang sama */
+}
+
+/* Styling khusus untuk tombol Hapus (merah) */
+.admin-button.delete {
+  background: #d32f2f; /* Warna merah yang sama dengan tombol "Batal" */
+}
+
+.admin-button.delete:hover {
+  background: #e57370; /* Warna hover merah yang sama */
+}
+
+/* Styling untuk form tambah produk */
+#addProductForm button[type="submit"] {
+  width: auto; /* Agar tombol tidak mengambil lebar penuh */
+  padding: 0.8rem 1.5rem; /* Sesuaikan padding */
+  margin-top: 1rem; /* Beri sedikit jarak dari input */
+}
+
 
 /* ========================================================================== */
 /* ======================== MEDIA QUERIES FOR RESPONSIVENESS ================ */
@@ -745,5 +793,18 @@ footer {
     max-width: none; /* Hapus batasan max-width */
     font-size: 0.9rem;
     padding: 0.6rem;
+  }
+
+  /* NEW: Admin buttons in mobile */
+  .admin-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+    margin-right: 0.3rem;
+  }
+
+  #productsList div {
+    flex-direction: column; /* Tumpuk item di layar kecil */
+    align-items: flex-start; /* Rata kiri */
   }
 }
