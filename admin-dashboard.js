@@ -43,8 +43,10 @@ async function loadProducts() {
       const div = document.createElement("div");
       div.innerHTML = `
         <p><strong>${p.name}</strong> - Rp ${p.price.toLocaleString()}</p>
-        <button onclick="deleteProduct('${p.id}')">🗑️ Hapus</button>
-        <button onclick="toggleProduct('${p.id}', ${p.active ? "false" : "true"})">
+        <!-- UPDATED: Added class="admin-button delete" -->
+        <button onclick="deleteProduct('${p.id}')" class="admin-button delete">🗑️ Hapus</button>
+        <!-- UPDATED: Added class="admin-button" -->
+        <button onclick="toggleProduct('${p.id}', ${p.active ? "false" : "true"})" class="admin-button">
           ${p.active ? "Nonaktifkan" : "Aktifkan"}
         </button>
       `;
@@ -150,7 +152,8 @@ async function loadOrders() {
           <option value="payment_failed" ${o.status === 'payment_failed' ? 'selected' : ''}>Pembayaran Gagal</option>
           <option value="done" ${o.status === 'done' ? 'selected' : ''}>Pesanan Selesai</option>
         </select>
-        <button onclick="saveOrderStatus('${o.id}')">Update</button>
+        <!-- UPDATED: Added class="admin-button" -->
+        <button onclick="saveOrderStatus('${o.id}')" class="admin-button">Update</button>
       `;
       container.appendChild(div);
     });
