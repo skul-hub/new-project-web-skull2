@@ -23,11 +23,13 @@ function showSection(section) {
   document.getElementById("products").style.display = "none";
   document.getElementById("orders").style.display = "none";
   document.getElementById("settings").style.display = "none";
+  document.getElementById("ratings").style.display = "none"; // Tambahkan ini
   document.getElementById(section).style.display = "block";
 
   if (section === "products") loadProducts();
   if (section === "orders") loadOrders();
   if (section === "settings") loadQrisSettings();
+  if (section === "ratings") loadRatings(); // Panggil fungsi baru
 }
 
 async function loadProducts() {
@@ -365,6 +367,119 @@ async function saveAnnouncement(event) {
 
   alert("Pengumuman berhasil disimpan!");
   loadQrisSettings();
+}
+
+// Fungsi baru untuk memuat dan menampilkan rating
+async function loadRatings() {
+  const { data: ratings, error } = await window.supabase
+    .from("ratings")
+    .select(`
+      id,
+      rating,
+      comment,
+      created_at,
+      users(username),
+      products(name)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading ratings:", error);
+    return;
+  }
+
+  const container = document.getElementById("ratingsList");
+  container.innerHTML = "";
+
+  if (ratings && ratings.length > 0) {
+    // Tampilkan statistik rating
+    displayRatingStatistics(ratings);
+
+    const table = document.createElement("table");
+    table.className = "ratings-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Produk</th>
+          <th>Rating</th>
+          <th>Komentar</th>
+          <th>Tanggal</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    ratings.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.users ? r.users.username : 'N/A'}</td>
+        <td>${r.products ? r.products.name : 'N/A'}</td>
+        <td>${'⭐'.repeat(r.rating)} (${r.rating}/5)</td>
+        <td>${r.comment || '-'}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td>
+          <button onclick="deleteRating('${r.id}')" class="admin-button delete">🗑️ Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    container.appendChild(table);
+  } else {
+    // Reset statistik jika tidak ada rating
+    document.getElementById("totalRatingsCount").textContent = "0";
+    document.getElementById("averageRating").textContent = "0.0";
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById(`star${i}Count`).textContent = "0";
+      document.getElementById(`star${i}Percent`).textContent = "0%";
+      document.getElementById(`star${i}Bar`).style.width = "0%";
+    }
+    container.innerHTML = "<p>Belum ada rating atau komentar.</p>";
+  }
+}
+
+// Fungsi untuk menghapus rating
+async function deleteRating(ratingId) {
+  if (!confirm("Yakin ingin menghapus rating ini?")) return;
+
+  const { error } = await window.supabase.from("ratings").delete().eq("id", ratingId);
+
+  if (error) {
+    alert("Gagal menghapus rating: " + error.message);
+    console.error("Error deleting rating:", error);
+    return;
+  }
+
+  alert("Rating berhasil dihapus.");
+  loadRatings(); // Refresh daftar rating
+}
+
+// Fungsi untuk menampilkan statistik rating
+function displayRatingStatistics(ratings) {
+  const totalRatings = ratings.length;
+  let sumRatings = 0;
+  const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+  ratings.forEach(r => {
+    sumRatings += r.rating;
+    starCounts[r.rating]++;
+  });
+
+  const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : "0.0";
+
+  document.getElementById("totalRatingsCount").textContent = totalRatings;
+  document.getElementById("averageRating").textContent = averageRating;
+
+  for (let i = 1; i <= 5; i++) {
+    const count = starCounts[i];
+    const percentage = totalRatings > 0 ? ((count / totalRatings) * 100).toFixed(1) : "0.0";
+    document.getElementById(`star${i}Count`).textContent = count;
+    document.getElementById(`star${i}Percent`).textContent = `${percentage}%`;
+    document.getElementById(`star${i}Bar`).style.width = `${percentage}%`;
+  }
 }
 
 async function logout() {
