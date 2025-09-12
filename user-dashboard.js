@@ -432,6 +432,309 @@ async function submitRating() {
   alert("Terima kasih atas rating Anda!");
   closeRatingModal();
   loadHistory(); // Refresh riwayat pesanan
+  loadMyRatings(); // Refresh rating saya
+}
+
+async function loadHistory() {
+  const { data, error } = await window.supabase
+    .from("orders_view")
+    .select("*")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading order history:", error);
+    return;
+  }
+
+  const historyDiv = document.getElementById("historyItems");
+  historyDiv.innerHTML = "";
+  if (data && data.length > 0) {
+    for (const o of data) { // Gunakan for...of untuk async/await di dalam loop
+      const div = document.createElement("div");
+      div.className = "order";
+
+      let ratingButton = '';
+      if (o.status === 'done') { // Hanya tampilkan tombol rating jika status pesanan 'done'
+        const { data: existingRating, error: ratingCheckError } = await window.supabase
+          .from("ratings")
+          .select("id")
+          .eq("order_id", o.id)
+          .single();
+
+        if (ratingCheckError && ratingCheckError.code !== 'PGRST116') { // PGRST116 = data not found
+          console.error("Error checking existing rating:", ratingCheckError);
+        }
+
+        const buttonText = existingRating ? "Lihat/Ubah Rating" : "Beri Rating";
+        ratingButton = `<button onclick="openRatingModal('${o.id}', '${o.product_id}')" class="admin-button" style="margin-top: 10px;">${buttonText}</button>`;
+      }
+
+      div.innerHTML = `
+        <p><strong>Order ID:</strong> ${o.id}</p>
+        <p><strong>Produk:</strong> ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
+        <p><strong>Status:</strong> ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
+        <p><strong>Metode Pembayaran:</strong> ${o.payment_method.toUpperCase()}</p>
+        <p><strong>Email:</strong> ${o.contact_email || "-"}</p>
+        <p><strong>Bukti Transfer:</strong> ${
+          o.payment_proof
+            ? `<a href="${o.payment_proof}" target="_blank">Lihat Bukti</a>`
+            : "-"
+        }</p>
+        <p><strong>Tanggal Pesan:</strong> ${new Date(o.created_at).toLocaleString()}</p>
+        ${ratingButton}
+      `;
+      historyDiv.appendChild(div);
+    }
+  } else {
+    historyDiv.innerHTML = "<p>Belum ada riwayat pesanan.</p>";
+  }
+}
+
+async function loadMyRatings() {
+  if (!currentUser) return;
+
+  const { data: ratings, error } = await window.supabase
+    .from("ratings")
+    .select(`
+      id,
+      rating,
+      comment,
+      created_at,
+      products(name)
+    `)
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading user ratings:", error);
+    return;
+  }
+
+  const container = document.getElementById("myRatingsList");
+  container.innerHTML = "";
+
+  if (ratings && ratings.length > 0) {
+    displayRatingStatisticsUser(ratings); // Tampilkan statistik rating pengguna
+
+    const table = document.createElement("table");
+    table.className = "ratings-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Produk</th>
+          <th>Rating</th>
+          <th>Komentar</th>
+          <th>Tanggal</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    ratings.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.products ? r.products.name : 'N/A'}</td>
+        <td>${'⭐'.repeat(r.rating)} (${r.rating}/5)</td>
+        <td>${r.comment || '-'}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    container.appendChild(table);
+  } else {
+    // Reset statistik jika tidak ada rating
+    document.getElementById("userTotalRatingsCount").textContent = "0";
+    document.getElementById("userAverageRating").textContent = "0.0";
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById(`userStar${i}Count`).textContent = "0";
+      document.getElementById(`userStar${i}Percent`).textContent = "0%";
+      document.getElementById(`userStar${i}Bar`).style.width = "0%";
+    }
+    container.innerHTML = "<p>Anda belum memberikan rating atau komentar.</p>";
+  }
+}
+
+// Fungsi untuk menampilkan statistik rating pengguna
+function displayRatingStatisticsUser(ratings) {
+  const totalRatings = ratings.length;
+  let sumRatings = 0;
+  const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+  ratings.forEach(r => {
+    sumRatings += r.rating;
+    starCounts[r.rating]++;
+  });
+
+  const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : "0.0";
+
+  document.getElementById("userTotalRatingsCount").textContent = totalRatings;
+  document.getElementById("userAverageRating").textContent = averageRating;
+
+  for (let i = 1; i <= 5; i++) {
+    const count = starCounts[i];
+    const percentage = totalRatings > 0 ? ((count / totalRatings) * 100).toFixed(1) : "0.0";
+    document.getElementById(`userStar${i}Count`).textContent = count;
+    document.getElementById(`userStar${i}Percent`).textContent = `${percentage}%`;
+    document.getElementById(`userStar${i}Bar`).style.width = `${percentage}%`;
+  }
+}
+
+
+async function loadAnnouncement() {
+  const { data, error } = await window.supabase.from("settings").select("announcement").single();
+  const announcementContainer = document.getElementById("announcementContainer");
+  const announcementMessage = document.getElementById("announcementMessage");
+
+  if (error && error.code !== 'PGRST116') {
+    console.error("Error loading announcement:", error);
+    announcementContainer.style.display = "none";
+    return;
+  }
+
+  if (data && data.announcement) {
+    announcementMessage.textContent = data.announcement;
+    announcementContainer.style.display = "block";
+  } else {
+    announcementContainer.style.display = "none";
+  }
+}
+
+function showSection(section) {
+  document.getElementById("products").style.display = "none";
+  document.getElementById("cart").style.display = "none";
+  document.getElementById("history").style.disroofUrl,
+    contact_email: email,
+    status: "waiting_confirmation",
+  };
+}
+
+let currentOrderIdForRating = null;
+let currentProductIdForRating = null;
+
+// Fungsi untuk menampilkan modal rating
+async function openRatingModal(orderId, productId) {
+  currentOrderIdForRating = orderId;
+  currentProductIdForRating = productId;
+
+  // Ambil nama produk
+  const { data: productData, error: productError } = await window.supabase
+    .from("products")
+    .select("name")
+    .eq("id", productId)
+    .single();
+
+  if (productError || !productData) {
+    console.error("Error fetching product name for rating:", productError);
+    alert("Gagal memuat informasi produk untuk rating.");
+    return;
+  }
+
+  document.getElementById("ratingProductName").textContent = productData.name;
+
+  // Reset bintang dan komentar
+  document.querySelectorAll(".rating-stars .star").forEach(star => {
+    star.classList.remove("selected");
+  });
+  document.getElementById("selectedRating").value = "0";
+  document.getElementById("ratingComment").value = "";
+
+  // Cek apakah user sudah pernah memberi rating untuk order ini
+  const { data: existingRating, error: ratingError } = await window.supabase
+    .from("ratings")
+    .select("*")
+    .eq("order_id", orderId)
+    .single();
+
+  if (existingRating) {
+    // Jika sudah ada, tampilkan rating dan komentar yang sudah ada
+    document.getElementById("selectedRating").value = existingRating.rating;
+    document.getElementById("ratingComment").value = existingRating.comment || "";
+    document.querySelectorAll(".rating-stars .star").forEach(star => {
+      if (parseInt(star.dataset.value) <= existingRating.rating) {
+        star.classList.add("selected");
+      }
+    });
+  }
+
+  document.getElementById("ratingModal").style.display = "flex";
+}
+
+// Fungsi untuk menutup modal rating
+function closeRatingModal() {
+  document.getElementById("ratingModal").style.display = "none";
+  currentOrderIdForRating = null;
+  currentProductIdForRating = null;
+}
+
+// Event listener untuk bintang rating
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".rating-stars .star").forEach(star => {
+    star.addEventListener("click", function() {
+      const ratingValue = parseInt(this.dataset.value);
+      document.getElementById("selectedRating").value = ratingValue;
+      document.querySelectorAll(".rating-stars .star").forEach(s => {
+        if (parseInt(s.dataset.value) <= ratingValue) {
+          s.classList.add("selected");
+        } else {
+          s.classList.remove("selected");
+        }
+      });
+    });
+  });
+});
+
+// Fungsi untuk mengirim rating
+async function submitRating() {
+  const rating = parseInt(document.getElementById("selectedRating").value);
+  const comment = document.getElementById("ratingComment").value.trim();
+
+  if (rating === 0) {
+    alert("Silakan pilih bintang rating!");
+    return;
+  }
+
+  if (!currentOrderIdForRating || !currentProductIdForRating || !currentUser) {
+    alert("Terjadi kesalahan. Silakan coba lagi.");
+    return;
+  }
+
+  // Cek apakah user sudah pernah memberi rating untuk order ini
+  const { data: existingRating, error: checkError } = await window.supabase
+    .from("ratings")
+    .select("id")
+    .eq("order_id", currentOrderIdForRating)
+    .single();
+
+  let error;
+  if (existingRating) {
+    // Update rating jika sudah ada
+    ({ error } = await window.supabase
+      .from("ratings")
+      .update({ rating: rating, comment: comment, created_at: new Date() })
+      .eq("id", existingRating.id));
+  } else {
+    // Insert rating baru
+    ({ error } = await window.supabase.from("ratings").insert([{
+      order_id: currentOrderIdForRating,
+      user_id: currentUser.id,
+      product_id: currentProductIdForRating,
+      rating: rating,
+      comment: comment,
+    }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan rating: " + error.message);
+    console.error("Error saving rating:", error);
+    return;
+  }
+
+  alert("Terima kasih atas rating Anda!");
+  closeRatingModal();
+  loadHistory(); // Refresh riwayat pesanan
 }
 
 async function loadHistory() {
