@@ -19,6 +19,7 @@
         <li><a href="#" onclick="showSection('products')">Produk</a></li>
         <li><a href="#" onclick="showSection('cart')">Keranjang</a></li>
         <li><a href="#" onclick="showSection('history')">History</a></li>
+        <li><a href="#" onclick="showSection('my-ratings')">Rating Saya</a></li> <!-- Tombol baru -->
         <li><a href="#" onclick="logout()">Logout</a></li>
       </ul>
     </nav>
@@ -57,6 +58,33 @@
     <section id="history" style="display:none;">
       <h2>Order History</h2>
       <div id="historyItems"></div>
+    </section>
+
+    <!-- Rating Saya -->
+    <section id="my-ratings" style="display:none;">
+      <h2>Rating & Komentar Saya</h2>
+
+      <div class="rating-summary">
+        <h3>Statistik Rating Saya</h3>
+        <div id="userRatingStats">
+          <p>Total Rating Diberikan: <strong id="userTotalRatingsCount">0</strong></p>
+          <p>Rata-rata Rating Saya: <strong id="userAverageRating">0.0</strong></p>
+          <p>Bintang 5: <strong id="userStar5Count">0</strong> (<span id="userStar5Percent">0%</span>)
+            <div class="progress-bar-container"><div id="userStar5Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 4: <strong id="userStar4Count">0</strong> (<span id="userStar4Percent">0%</span>)
+            <div class="progress-bar-container"><div id="userStar4Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 3: <strong id="userStar3Count">0</strong> (<span id="userStar3Percent">0%</span>)
+            <div class="progress-bar-container"><div id="userStar3Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 2: <strong id="userStar2Count">0</strong> (<span id="userStar2Percent">0%</span>)
+            <div class="progress-bar-container"><div id="userStar2Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 1: <strong id="userStar1Count">0</strong> (<span id="userStar1Percent">0%</span>)
+            <div class="progress-bar-container"><div id="userStar1Bar" class="progress-bar"></div></div></p>
+        </div>
+      </div>
+
+      <div id="myRatingsList">
+        <!-- Daftar rating saya akan dimuat di sini oleh JS -->
+      </div>
     </section>
   </main>
 
@@ -112,4 +140,4 @@
     <p>&copy; 2025 STORESKULL</p>
   </footer>
 </body>
-</html>
+        </html>
