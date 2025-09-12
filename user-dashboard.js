@@ -49,7 +49,7 @@ function displayProducts(productsToDisplay) {
       div.className = "product";
       let stockInfo = '';
       let buyButton = `<button onclick="buyNow('${p.id}', '${safeName}', ${p.price})">Beli Sekarang</button>`;
-      let cartButton = `<button onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Tambah ke Cart</button>`;
+      let cartButton = `<button onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Tambah ke Keranjang</button>`;
 
       if (p.category === 'game_account') {
         stockInfo = `<p>Stok: <strong>${p.stock}</strong></p>`;
@@ -110,7 +110,7 @@ async function addToCart(id, name, price) {
   }
   cart.push({ id, name, price, category: product.category }); // Add category to cart item
   updateCartDisplay();
-  alert("Ditambahkan ke cart!");
+  alert("Ditambahkan ke Keranjang By Bangskull!");
 }
 
 function updateCartDisplay() {
