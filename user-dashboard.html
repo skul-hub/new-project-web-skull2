@@ -19,7 +19,7 @@
         <li><a href="#" onclick="showSection('products')">Produk</a></li>
         <li><a href="#" onclick="showSection('cart')">Keranjang</a></li>
         <li><a href="#" onclick="showSection('history')">History</a></li>
-        <li><a href="#" onclick="showSection('my-ratings')">Rating Saya</a></li> <!-- Tombol baru -->
+        <li><a href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li> <!-- Tombol baru -->
         <li><a href="#" onclick="logout()">Logout</a></li>
       </ul>
     </nav>
@@ -68,30 +68,30 @@
       <div id="historyItems"></div>
     </section>
 
-    <!-- Rating Saya -->
-    <section id="my-ratings" style="display:none;">
-      <h2>Rating & Komentar Saya</h2>
+    <!-- Semua Rating Produk (sekarang menampilkan statistik global) -->
+    <section id="all-ratings" style="display:none;">
+      <h2>Semua Rating Produk</h2>
 
       <div class="rating-summary">
-        <h3>Statistik Rating Saya</h3>
-        <div id="userRatingStats">
-          <p>Total Rating Diberikan: <strong id="userTotalRatingsCount">0</strong></p>
-          <p>Rata-rata Rating Saya: <strong id="userAverageRating">0.0</strong></p>
-          <p>Bintang 5: <strong id="userStar5Count">0</strong> (<span id="userStar5Percent">0%</span>)
-            <div class="progress-bar-container"><div id="userStar5Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 4: <strong id="userStar4Count">0</strong> (<span id="userStar4Percent">0%</span>)
-            <div class="progress-bar-container"><div id="userStar4Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 3: <strong id="userStar3Count">0</strong> (<span id="userStar3Percent">0%</span>)
-            <div class="progress-bar-container"><div id="userStar3Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 2: <strong id="userStar2Count">0</strong> (<span id="userStar2Percent">0%</span>)
-            <div class="progress-bar-container"><div id="userStar2Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 1: <strong id="userStar1Count">0</strong> (<span id="userStar1Percent">0%</span>)
-            <div class="progress-bar-container"><div id="userStar1Bar" class="progress-bar"></div></div></p>
+        <h3>Statistik Rating Keseluruhan</h3>
+        <div id="globalRatingStats"> <!-- ID diubah menjadi globalRatingStats -->
+          <p>Total Rating: <strong id="globalTotalRatingsCount">0</strong></p>
+          <p>Rata-rata Rating: <strong id="globalAverageRating">0.0</strong></p>
+          <p>Bintang 5: <strong id="globalStar5Count">0</strong> (<span id="globalStar5Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar5Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 4: <strong id="globalStar4Count">0</strong> (<span id="globalStar4Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar4Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 3: <strong id="globalStar3Count">0</strong> (<span id="globalStar3Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar3Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 2: <strong id="globalStar2Count">0</strong> (<span id="globalStar2Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar2Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 1: <strong id="globalStar1Count">0</strong> (<span id="globalStar1Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar1Bar" class="progress-bar"></div></div></p>
         </div>
       </div>
 
-      <div id="myRatingsList">
-        <!-- Daftar rating saya akan dimuat di sini oleh JS -->
+      <div id="globalRatingsList">
+        <!-- Daftar rating akan dimuat di sini oleh JS -->
       </div>
     </section>
   </main>
