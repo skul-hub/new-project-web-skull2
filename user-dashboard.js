@@ -333,7 +333,8 @@ async function openRatingModal(orderId, productId) {
 
   // Reset bintang dan komentar
   // Pastikan semua bintang tidak terpilih secara default
-  document.querySelectorAll(".rating-stars .star").forEach(star => {
+  const stars = document.querySelectorAll(".rating-stars .star");
+  stars.forEach(star => {
     star.classList.remove("selected");
   });
   document.getElementById("selectedRating").value = "0";
@@ -351,7 +352,7 @@ async function openRatingModal(orderId, productId) {
     document.getElementById("selectedRating").value = existingRating.rating;
     document.getElementById("ratingComment").value = existingRating.comment || "";
     // Set bintang yang terpilih berdasarkan rating yang sudah ada
-    document.querySelectorAll(".rating-stars .star").forEach(star => {
+    stars.forEach(star => {
       if (parseInt(star.dataset.value) <= existingRating.rating) {
         star.classList.add("selected");
       }
@@ -372,12 +373,13 @@ function closeRatingModal() {
 document.addEventListener("DOMContentLoaded", () => {
   // Pastikan event listener hanya ditambahkan sekali
   if (!document.body.dataset.ratingListenerAdded) {
-    document.querySelectorAll(".rating-stars .star").forEach(star => {
+    const stars = document.querySelectorAll(".rating-stars .star");
+    stars.forEach(star => {
       star.addEventListener("click", function() {
         const ratingValue = parseInt(this.dataset.value);
         document.getElementById("selectedRating").value = ratingValue;
         // Logika untuk menambahkan/menghapus kelas 'selected'
-        document.querySelectorAll(".rating-stars .star").forEach(s => {
+        stars.forEach(s => {
           if (parseInt(s.dataset.value) <= ratingValue) {
             s.classList.add("selected");
           } else {
