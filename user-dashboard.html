@@ -39,11 +39,11 @@
       </a>
     </div>
 
-    <!-- Kategori Produk -->
-    <div class="product-categories">
+    <!-- Kategori Produk (DIPINDAHKAN KE DALAM SECTION PRODUK) -->
+    <!-- <div class="product-categories">
       <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
       <button class="category-button" onclick="filterProductsByCategory('game_account')">KHUSUS PROMO</button>
-    </div>
+    </div> -->
 
     <!-- Produk -->
     <section id="products">
@@ -51,6 +51,11 @@
       <!-- Tambahkan input pencarian di sini -->
       <div class="search-container">
         <input type="text" id="productSearch" placeholder="Cari produk..." onkeyup="filterProducts()">
+      </div>
+      <!-- Kategori Produk (SEKARANG DI SINI) -->
+      <div class="product-categories">
+        <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
+        <button class="category-button" onclick="filterProductsByCategory('game_account')">KHUSUS PROMO</button>
       </div>
       <div id="productsContainer" class="products-grid"></div>
     </section>
