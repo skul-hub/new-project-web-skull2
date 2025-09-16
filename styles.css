@@ -1109,7 +1109,7 @@ footer {
     margin-right: 8px;
   }
 
-  /* Rating Summary */
+  /* Rating Summary (User Dashboard & Admin Dashboard) */
   .rating-summary {
     padding: 1rem;
     margin-bottom: 1.5rem;
@@ -1117,19 +1117,48 @@ footer {
 
   .rating-summary h3 {
     font-size: 1.2rem;
+    margin-bottom: 0.8rem; /* Sesuaikan margin bawah judul */
   }
 
   .rating-summary p {
     font-size: 0.9rem;
+    margin-bottom: 0.3rem; /* Kurangi margin antar paragraf statistik */
+    display: flex; /* Gunakan flexbox untuk menata konten dalam satu baris */
+    align-items: center; /* Pusatkan secara vertikal */
+    flex-wrap: wrap; /* Izinkan wrap jika konten terlalu panjang */
+    gap: 0.5rem; /* Jarak antar elemen dalam satu baris statistik */
+  }
+
+  .rating-summary p strong {
+    flex-shrink: 0; /* Mencegah angka rating mengecil */
+  }
+
+  .rating-summary p span {
+    flex-shrink: 0; /* Mencegah persentase mengecil */
+  }
+
+  .rating-summary .progress-bar-container {
+    flex-grow: 1; /* Biarkan progress bar mengambil sisa ruang */
+    min-width: 80px; /* Beri lebar minimum agar terlihat */
+    height: 8px; /* Perkecil tinggi progress bar */
+    margin-top: 0; /* Hapus margin atas */
   }
 
   /* Ratings Table */
   .ratings-table {
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* Perkecil font tabel */
   }
 
   .ratings-table th, .ratings-table td {
-    padding: 0.6rem;
+    padding: 0.5rem; /* Kurangi padding sel tabel */
+    /* Tambahkan overflow-x untuk tabel agar bisa di-scroll jika terlalu lebar */
+    white-space: nowrap; /* Mencegah teks wrap di sel tabel */
+  }
+
+  /* Untuk membuat tabel bisa di-scroll horizontal */
+  #ratingsList, #myRatingsList {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Announcement */
