@@ -1,4 +1,4 @@
-FileContents: /* === Global Reset === */
+/* === Global Reset === */
 * {
   margin: 0;
   padding: 0;
@@ -848,6 +848,7 @@ footer {
 
   header h1 {
     margin-bottom: 0.5rem; /* Beri jarak antara judul dan nav */
+    font-size: 1.5rem; /* Perkecil ukuran font judul */
   }
 
   header nav {
@@ -879,6 +880,10 @@ footer {
     margin-bottom: 1rem; /* Beri jarak antara brand dan link */
   }
 
+  .navbar-brand h1 a {
+    font-size: 1.5rem; /* Perkecil ukuran font brand */
+  }
+
   .nav-links {
     width: 100%; /* Ambil lebar penuh */
     justify-content: flex-start; /* Mulai link dari kiri */
@@ -903,21 +908,59 @@ footer {
     padding: 1.5rem; /* Kurangi padding di section */
   }
 
+  section h2 {
+    font-size: 1.5rem; /* Perkecil judul section */
+  }
+
+  /* Hero section */
+  .hero {
+    padding: 3rem 1.5rem; /* Kurangi padding hero */
+    margin: 1.5rem auto; /* Sesuaikan margin */
+  }
+
+  .hero h2 {
+    font-size: 2rem; /* Perkecil judul hero */
+  }
+
+  .hero p {
+    font-size: 1rem; /* Perkecil paragraf hero */
+  }
+
+  .hero button {
+    padding: 0.7rem 1.5rem; /* Sesuaikan padding tombol hero */
+    font-size: 0.9rem; /* Perkecil font tombol hero */
+  }
+
   /* Auth section */
   .auth-section {
     margin: 2rem auto; /* Kurangi margin atas/bawah */
     padding: 1.5rem; /* Kurangi padding */
   }
 
+  .auth-section h2 {
+    font-size: 1.5rem; /* Perkecil judul auth */
+  }
+
+  .auth-section input,
+  .auth-section button {
+    padding: 0.7rem; /* Sesuaikan padding input/button auth */
+    font-size: 0.9rem; /* Perkecil font input/button auth */
+  }
+
   /* Product grid */
   .products-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Sesuaikan ukuran produk */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Sesuaikan ukuran produk agar lebih kecil */
     gap: 1rem; /* Kurangi jarak antar produk */
   }
 
+  .product {
+    padding: 0.8rem; /* Kurangi padding produk */
+  }
+
   .product img {
-    width: 120px; /* Perkecil gambar produk */
-    height: 120px;
+    width: 100px; /* Perkecil gambar produk */
+    height: 100px;
+    margin: 0.8rem 0;
   }
 
   .product h3 {
@@ -925,12 +968,58 @@ footer {
   }
 
   .product p {
-    font-size: 0.9rem; /* Perkecil font harga produk */
+    font-size: 0.85rem; /* Perkecil font harga produk */
+    margin-bottom: 0.8rem;
   }
 
   .product button {
     padding: 0.5rem 0.8rem; /* Sesuaikan padding tombol produk */
-    font-size: 0.85rem; /* Perkecil font tombol produk */
+    font-size: 0.8rem; /* Perkecil font tombol produk */
+    margin: 0.3rem;
+  }
+
+  /* Admin Products List */
+  #productsList div {
+    flex-direction: column; /* Tumpuk item di layar kecil */
+    align-items: flex-start; /* Rata kiri */
+    padding: 0.6rem;
+    gap: 0.3rem;
+  }
+
+  #productsList div p {
+    font-size: 0.9rem;
+  }
+
+  .product-actions {
+    width: 100%; /* Ambil lebar penuh */
+    justify-content: flex-start; /* Rata kiri tombol aksi */
+    margin-top: 0.5rem;
+  }
+
+  /* Admin & User Order List */
+  .order {
+    padding: 0.8rem;
+    margin: 0.8rem 0;
+  }
+
+  .order p {
+    font-size: 0.9rem;
+    margin: 0.2rem 0;
+  }
+
+  .order select {
+    width: 100%; /* Ambil lebar penuh */
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+    padding: 0.4rem;
+  }
+
+  .order button.admin-button {
+    width: 100%; /* Ambil lebar penuh */
+    margin-top: 0.5rem;
+    margin-right: 0; /* Hapus margin kanan */
+    padding: 0.6rem;
+    font-size: 0.9rem;
   }
 
   /* Modals */
@@ -942,14 +1031,18 @@ footer {
     font-size: 1.2rem; /* Perkecil font judul modal */
   }
 
-  .modal-content button {
-    padding: 0.6rem 1rem; /* Sesuaikan padding tombol modal */
-    font-size: 0.9rem; /* Perkecil font tombol modal */
+  .modal-content p {
+    font-size: 0.9rem;
   }
 
-  /* Adjust input file and email in modals for smaller screens */
+  .modal-content img {
+    max-width: 180px; /* Perkecil gambar QRIS di modal */
+    height: 180px;
+  }
+
   .modal-content input[type="file"],
-  .modal-content input[type="email"] {
+  .modal-content input[type="email"],
+  .modal-content textarea {
     width: 100%; /* Ambil lebar penuh di mobile */
     margin: 0.8rem auto; /* Sesuaikan margin */
     padding: 0.6rem; /* Kurangi padding */
@@ -962,6 +1055,18 @@ footer {
     font-size: 0.8rem; /* Perkecil font tombol file */
   }
 
+  .modal-content .row {
+    flex-direction: column; /* Tumpuk tombol di modal */
+    gap: 0.8rem;
+  }
+
+  .modal-content button {
+    width: 100%; /* Ambil lebar penuh */
+    padding: 0.7rem; /* Sesuaikan padding tombol modal */
+    font-size: 0.9rem; /* Perkecil font tombol modal */
+  }
+
+  /* Search input */
   #productSearch {
     width: 100%; /* Ambil lebar penuh di mobile */
     max-width: none; /* Hapus batasan max-width */
@@ -969,7 +1074,7 @@ footer {
     padding: 0.6rem;
   }
 
-  /* NEW: Admin buttons in mobile */
+  /* Admin buttons (general) */
   .admin-button {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
@@ -977,13 +1082,10 @@ footer {
     margin-right: 0.3rem;
   }
 
-  #productsList div {
-    flex-direction: column; /* Tumpuk item di layar kecil */
-    align-items: flex-start; /* Rata kiri */
-  }
-
+  /* Product Categories Buttons */
   .product-categories {
     gap: 0.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .category-button {
@@ -992,6 +1094,10 @@ footer {
   }
 
   /* Telegram button responsiveness */
+  .telegram-button-container {
+    margin-bottom: 1.5rem;
+  }
+
   .telegram-button {
     padding: 0.6rem 1rem;
     font-size: 0.9rem;
@@ -1001,6 +1107,39 @@ footer {
     width: 20px;
     height: 20px;
     margin-right: 8px;
+  }
+
+  /* Rating Summary */
+  .rating-summary {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .rating-summary h3 {
+    font-size: 1.2rem;
+  }
+
+  .rating-summary p {
+    font-size: 0.9rem;
+  }
+
+  /* Ratings Table */
+  .ratings-table {
+    font-size: 0.9rem;
+  }
+
+  .ratings-table th, .ratings-table td {
+    padding: 0.6rem;
+  }
+
+  /* Announcement */
+  #announcementContainer {
+    padding: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  #announcementMessage {
+    font-size: 0.9rem;
   }
 }
 
@@ -1017,4 +1156,4 @@ footer {
   textarea {
     font-size: 16px !important;
   }
-  }
+}
