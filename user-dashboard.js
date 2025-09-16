@@ -332,6 +332,7 @@ async function openRatingModal(orderId, productId) {
   document.getElementById("ratingProductName").textContent = productData.name;
 
   // Reset bintang dan komentar
+  // Pastikan semua bintang tidak terpilih secara default
   document.querySelectorAll(".rating-stars .star").forEach(star => {
     star.classList.remove("selected");
   });
@@ -349,6 +350,7 @@ async function openRatingModal(orderId, productId) {
     // Jika sudah ada, tampilkan rating dan komentar yang sudah ada
     document.getElementById("selectedRating").value = existingRating.rating;
     document.getElementById("ratingComment").value = existingRating.comment || "";
+    // Set bintang yang terpilih berdasarkan rating yang sudah ada
     document.querySelectorAll(".rating-stars .star").forEach(star => {
       if (parseInt(star.dataset.value) <= existingRating.rating) {
         star.classList.add("selected");
@@ -374,6 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
       star.addEventListener("click", function() {
         const ratingValue = parseInt(this.dataset.value);
         document.getElementById("selectedRating").value = ratingValue;
+        // Logika untuk menambahkan/menghapus kelas 'selected'
         document.querySelectorAll(".rating-stars .star").forEach(s => {
           if (parseInt(s.dataset.value) <= ratingValue) {
             s.classList.add("selected");
