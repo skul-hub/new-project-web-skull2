@@ -368,19 +368,23 @@ function closeRatingModal() {
 
 // Event listener untuk bintang rating
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".rating-stars .star").forEach(star => {
-    star.addEventListener("click", function() {
-      const ratingValue = parseInt(this.dataset.value);
-      document.getElementById("selectedRating").value = ratingValue;
-      document.querySelectorAll(".rating-stars .star").forEach(s => {
-        if (parseInt(s.dataset.value) <= ratingValue) {
-          s.classList.add("selected");
-        } else {
-          s.classList.remove("selected");
-        }
+  // Pastikan event listener hanya ditambahkan sekali
+  if (!document.body.dataset.ratingListenerAdded) {
+    document.querySelectorAll(".rating-stars .star").forEach(star => {
+      star.addEventListener("click", function() {
+        const ratingValue = parseInt(this.dataset.value);
+        document.getElementById("selectedRating").value = ratingValue;
+        document.querySelectorAll(".rating-stars .star").forEach(s => {
+          if (parseInt(s.dataset.value) <= ratingValue) {
+            s.classList.add("selected");
+          } else {
+            s.classList.remove("selected");
+          }
+        });
       });
     });
-  });
+    document.body.dataset.ratingListenerAdded = true;
+  }
 });
 
 // Fungsi untuk mengirim rating
@@ -432,7 +436,7 @@ async function submitRating() {
   alert("Terima kasih atas rating Anda!");
   closeRatingModal();
   loadHistory(); // Refresh riwayat pesanan
-  loadMyRatings(); // Refresh rating saya
+  loadAllRatings(); // Refresh rating global
 }
 
 async function loadHistory() {
@@ -491,9 +495,8 @@ async function loadHistory() {
   }
 }
 
-async function loadMyRatings() {
-  if (!currentUser) return;
-
+// Fungsi baru untuk memuat dan menampilkan rating GLOBAL
+async function loadAllRatings() {
   const { data: ratings, error } = await window.supabase
     .from("ratings")
     .select(`
@@ -501,27 +504,29 @@ async function loadMyRatings() {
       rating,
       comment,
       created_at,
+      users(username),
       products(name)
     `)
-    .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error loading user ratings:", error);
+    console.error("Error loading global ratings:", error);
     return;
   }
 
-  const container = document.getElementById("myRatingsList");
+  const container = document.getElementById("globalRatingsList");
   container.innerHTML = "";
 
   if (ratings && ratings.length > 0) {
-    displayRatingStatisticsUser(ratings); // Tampilkan statistik rating pengguna
+    // Tampilkan statistik rating global
+    displayGlobalRatingStatistics(ratings);
 
     const table = document.createElement("table");
     table.className = "ratings-table";
     table.innerHTML = `
       <thead>
         <tr>
+          <th>User</th>
           <th>Produk</th>
           <th>Rating</th>
           <th>Komentar</th>
@@ -536,6 +541,7 @@ async function loadMyRatings() {
     ratings.forEach((r) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
+        <td>${r.users ? r.users.username : 'N/A'}</td>
         <td>${r.products ? r.products.name : 'N/A'}</td>
         <td>${'⭐'.repeat(r.rating)} (${r.rating}/5)</td>
         <td>${r.comment || '-'}</td>
@@ -546,19 +552,19 @@ async function loadMyRatings() {
     container.appendChild(table);
   } else {
     // Reset statistik jika tidak ada rating
-    document.getElementById("userTotalRatingsCount").textContent = "0";
-    document.getElementById("userAverageRating").textContent = "0.0";
+    document.getElementById("globalTotalRatingsCount").textContent = "0";
+    document.getElementById("globalAverageRating").textContent = "0.0";
     for (let i = 1; i <= 5; i++) {
-      document.getElementById(`userStar${i}Count`).textContent = "0";
-      document.getElementById(`userStar${i}Percent`).textContent = "0%";
-      document.getElementById(`userStar${i}Bar`).style.width = "0%";
+      document.getElementById(`globalStar${i}Count`).textContent = "0";
+      document.getElementById(`globalStar${i}Percent`).textContent = "0%";
+      document.getElementById(`globalStar${i}Bar`).style.width = "0%";
     }
-    container.innerHTML = "<p>Anda belum memberikan rating atau komentar.</p>";
+    container.innerHTML = "<p>Belum ada rating atau komentar dari pengguna.</p>";
   }
 }
 
-// Fungsi untuk menampilkan statistik rating pengguna
-function displayRatingStatisticsUser(ratings) {
+// Fungsi untuk menampilkan statistik rating GLOBAL
+function displayGlobalRatingStatistics(ratings) {
   const totalRatings = ratings.length;
   let sumRatings = 0;
   const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -570,15 +576,15 @@ function displayRatingStatisticsUser(ratings) {
 
   const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : "0.0";
 
-  document.getElementById("userTotalRatingsCount").textContent = totalRatings;
-  document.getElementById("userAverageRating").textContent = averageRating;
+  document.getElementById("globalTotalRatingsCount").textContent = totalRatings;
+  document.getElementById("globalAverageRating").textContent = averageRating;
 
   for (let i = 1; i <= 5; i++) {
     const count = starCounts[i];
     const percentage = totalRatings > 0 ? ((count / totalRatings) * 100).toFixed(1) : "0.0";
-    document.getElementById(`userStar${i}Count`).textContent = count;
-    document.getElementById(`userStar${i}Percent`).textContent = `${percentage}%`;
-    document.getElementById(`userStar${i}Bar`).style.width = `${percentage}%`;
+    document.getElementById(`globalStar${i}Count`).textContent = count;
+    document.getElementById(`globalStar${i}Percent`).textContent = `${percentage}%`;
+    document.getElementById(`globalStar${i}Bar`).style.width = `${percentage}%`;
   }
 }
 
@@ -606,7 +612,8 @@ function showSection(section) {
   document.getElementById("products").style.display = "none";
   document.getElementById("cart").style.display = "none";
   document.getElementById("history").style.display = "none";
-  document.getElementById("my-ratings").style.display = "none"; // Pastikan ini juga disembunyikan
+  // Ubah ID section yang disembunyikan
+  document.getElementById("all-ratings").style.display = "none";
   document.getElementById(section).style.display = "block";
 
   if (section === "products") {
@@ -616,7 +623,8 @@ function showSection(section) {
   }
   if (section === "cart") updateCartDisplay();
   if (section === "history") loadHistory();
-  if (section === "my-ratings") loadMyRatings(); // Panggil fungsi untuk memuat rating saya
+  // Panggil fungsi baru untuk memuat rating global
+  if (section === "all-ratings") loadAllRatings();
 }
 
 window.onload = () => {
