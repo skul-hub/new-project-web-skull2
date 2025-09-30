@@ -10,20 +10,16 @@
   <script src="index.js" defer></script>
 </head>
 <body>
-  <header>
-    <h1>STORESKULL</h1>
-    <nav>
-      <a href="signin.html">Login</a>
-      <a href="signup.html">Register</a>
-    </nav>
-  </header>
-  <main>
-    <section class="hero">
-      <h2>Selamat Datang di STORESKULL</h2>
-      <p>Temukan produk terbaik dengan harga menarik!</p>
-      <button onclick="window.location.href='signin.html'">Mulai Belanja</button>
-    </section>
+  <!-- Splash Screen -->
+  <div id="splash-screen">
+    <h1 class="splash-text">SHOP BANGSKULL</h1>
+  </div>
+
+  <!-- Konten utama akan dimuat setelah splash screen, atau langsung redirect ke login -->
+  <main style="display:none;">
+    <!-- Konten ini tidak akan terlihat karena akan langsung redirect -->
   </main>
+
   <footer>
     <p>&copy; 2025 STORESKULL</p>
   </footer>
