@@ -17,10 +17,11 @@
       </div>
       <ul class="nav-links">
         <li><a href="#" onclick="showSection('products')">Produk</a></li>
-        <li><a href="#" onclick="showSection('cart')">Keranjang</a></li>
-        <li><a href="#" onclick="showSection('history')">History</a></li>
-        <li><a href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li> <!-- Tombol baru -->
-        <li><a href="#" onclick="logout()">Logout</a></li>
+        <li style="display:none;"><a href="#" onclick="showSection('cart')">Keranjang</a></li> <!-- Sembunyikan default -->
+        <li style="display:none;"><a href="#" onclick="showSection('history')">History</a></li> <!-- Sembunyikan default -->
+        <li><a href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li>
+        <li style="display:none;"><a href="#" onclick="logout()">Logout</a></li> <!-- Sembunyikan default -->
+        <!-- Link Login/Register akan ditambahkan/dihapus oleh JS di sini -->
       </ul>
     </nav>
   </header>
@@ -38,12 +39,6 @@
         <span>Hubungi Kami di Telegram</span>
       </a>
     </div>
-
-    <!-- Kategori Produk (DIPINDAHKAN KE DALAM SECTION PRODUK) -->
-    <!-- <div class="product-categories">
-      <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
-      <button class="category-button" onclick="filterProductsByCategory('game_account')">KHUSUS PROMO</button>
-    </div> -->
 
     <!-- Produk -->
     <section id="products">
