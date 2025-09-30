@@ -8,25 +8,67 @@ let currentCategory = 'panel_pterodactyl'; // Default category changed to 'panel
 
 async function checkUserAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
+
+  // Dapatkan elemen nav-links
+  const navLinks = document.querySelector('.nav-links');
+  // Hapus link Login/Register yang mungkin sudah ada dari header
+  let loginLinkInHeader = navLinks.querySelector('a[href="signin.html"]');
+  let registerLinkInHeader = navLinks.querySelector('a[href="signup.html"]');
+  if (loginLinkInHeader) loginLinkInHeader.remove();
+  if (registerLinkInHeader) registerLinkInHeader.remove();
+
+
   if (error || !user) {
-    window.location.href = "signin.html";
-    return;
+    // Jika tidak ada user yang login, set currentUser ke null
+    currentUser = null;
+    console.log("User not logged in. Displaying products for guest.");
+    // Sembunyikan elemen navbar yang hanya untuk user login
+    // Menggunakan querySelectorAll dan forEach untuk lebih robust
+    navLinks.querySelector('li:nth-child(2)').style.display = 'none'; // Keranjang
+    navLinks.querySelector('li:nth-child(3)').style.display = 'none'; // History
+    // navLinks.querySelector('li:nth-child(4)') adalah "Semua Rating Produk", ini tetap terlihat
+    navLinks.querySelector('li:nth-child(5)').style.display = 'none'; // Logout
+
+    // Tambahkan tombol Login/Register ke nav-links
+    const loginLi = document.createElement('li');
+    const loginA = document.createElement('a');
+    loginA.href = 'signin.html';
+    loginA.textContent = 'Login';
+    loginLi.appendChild(loginA);
+    navLinks.appendChild(loginLi);
+
+    const registerLi = document.createElement('li');
+    const registerA = document.createElement('a');
+    registerA.href = 'signup.html';
+    registerA.textContent = 'Register';
+    registerLi.appendChild(registerA);
+    navLinks.appendChild(registerLi);
+
+  } else {
+    // Jika ada user yang login, ambil data user
+    const { data: userData, error: userError } = await window.supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData) {
+      alert("Gagal memuat profil user. Silakan login ulang.");
+      await window.supabase.auth.signOut();
+      window.location.href = "signin.html";
+      return;
+    }
+    currentUser = userData;
+    console.log("User logged in:", currentUser.username);
+
+    // Tampilkan elemen navbar yang hanya untuk user login
+    navLinks.querySelector('li:nth-child(2)').style.display = 'list-item'; // Keranjang
+    navLinks.querySelector('li:nth-child(3)').style.display = 'list-item'; // History
+    // navLinks.querySelector('li:nth-child(4)') adalah "Semua Rating Produk", ini tetap terlihat
+    navLinks.querySelector('li:nth-child(5)').style.display = 'list-item'; // Logout
   }
 
-  const { data: userData, error: userError } = await window.supabase
-    .from("users")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (userError || !userData) {
-    alert("Gagal memuat profil.");
-    await window.supabase.auth.signOut();
-    window.location.href = "signin.html";
-    return;
-  }
-
-  currentUser = userData;
+  // Selalu tampilkan bagian produk dan muat produk
   showSection("products");
   loadAnnouncement(); // Panggil fungsi untuk memuat pengumuman
 }
@@ -97,6 +139,12 @@ function filterProductsByCategory(category) {
 }
 
 async function addToCart(id, name, price) {
+  if (!currentUser) {
+    alert("Silakan login untuk menambahkan produk ke keranjang.");
+    window.location.href = "signin.html";
+    return;
+  }
+
   const product = allProducts.find(p => p.id === id);
   if (product.category === 'game_account' && product.stock <= 0) {
     alert("Stok produk ini sudah habis!");
@@ -138,7 +186,11 @@ function removeFromCart(index) {
 
 // ========== QRIS FLOW ==========
 async function buyNow(pid, name, price) {
-  if (!currentUser) return alert("Silakan login.");
+  if (!currentUser) {
+    alert("Silakan login untuk melakukan pembelian.");
+    window.location.href = "signin.html";
+    return;
+  }
 
   const product = allProducts.find(p => p.id === pid);
   if (product.category === 'game_account' && product.stock <= 0) {
@@ -151,8 +203,12 @@ async function buyNow(pid, name, price) {
 }
 
 async function checkout() {
+  if (!currentUser) {
+    alert("Silakan login untuk melakukan checkout.");
+    window.location.href = "signin.html";
+    return;
+  }
   if (cart.length === 0) return alert("Keranjang kosong!");
-  if (!currentUser) return alert("Silakan login.");
 
   // Check stock for all items in cart before proceeding
   for (const item of cart) {
@@ -313,6 +369,11 @@ let currentProductIdForRating = null;
 
 // Fungsi untuk menampilkan modal rating
 async function openRatingModal(orderId, productId) {
+  if (!currentUser) {
+    alert("Silakan login untuk memberi rating.");
+    window.location.href = "signin.html";
+    return;
+  }
   currentOrderIdForRating = orderId;
   currentProductIdForRating = productId;
 
@@ -445,6 +506,11 @@ async function submitRating() {
 }
 
 async function loadHistory() {
+  if (!currentUser) {
+    document.getElementById("historyItems").innerHTML = "<p>Silakan login untuk melihat riwayat pesanan Anda.</p>";
+    return;
+  }
+
   const { data, error } = await window.supabase
     .from("orders_view")
     .select("*")
@@ -502,6 +568,7 @@ async function loadHistory() {
 
 // Fungsi baru untuk memuat dan menampilkan rating GLOBAL
 async function loadAllRatings() {
+  // Rating global bisa dilihat tanpa login, jadi tidak perlu currentUser check di sini
   const { data: ratings, error } = await window.supabase
     .from("ratings")
     .select(`
@@ -614,21 +681,31 @@ async function loadAnnouncement() {
 }
 
 function showSection(section) {
+  // Sembunyikan semua section
   document.getElementById("products").style.display = "none";
   document.getElementById("cart").style.display = "none";
   document.getElementById("history").style.display = "none";
-  // Ubah ID section yang disembunyikan
   document.getElementById("all-ratings").style.display = "none";
+
+  // Tampilkan section yang diminta
   document.getElementById(section).style.display = "block";
 
+  // Muat data sesuai section
   if (section === "products") {
-    loadProducts(); // Memuat semua produk saat masuk ke bagian produk
-    document.getElementById("productSearch").value = ""; // Kosongkan kolom pencarian
-    filterProductsByCategory('panel_pterodactyl'); // Set default filter to 'panel_pterodactyl'
+    loadProducts();
+    document.getElementById("productSearch").value = "";
+    filterProductsByCategory('panel_pterodactyl');
   }
-  if (section === "cart") updateCartDisplay();
+  if (section === "cart") {
+    if (currentUser) { // Hanya muat keranjang jika user login
+      updateCartDisplay();
+      document.querySelector('#cart button').style.display = 'block'; // Tampilkan tombol checkout
+    } else {
+      document.getElementById("cartItems").innerHTML = "<p>Silakan login untuk melihat keranjang Anda.</p>";
+      document.querySelector('#cart button').style.display = 'none'; // Sembunyikan tombol checkout
+    }
+  }
   if (section === "history") loadHistory();
-  // Panggil fungsi baru untuk memuat rating global
   if (section === "all-ratings") loadAllRatings();
 }
 
