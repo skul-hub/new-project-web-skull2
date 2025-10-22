@@ -13,15 +13,15 @@
   <header>
     <nav class="navbar">
       <div class="navbar-brand">
-        <img src="img/logo.png" alt="Logo" class="store-logo">
         <h1><a href="user-dashboard.html">STORESKULL</a></h1>
       </div>
       <ul class="nav-links">
         <li><a href="#" onclick="showSection('products')">Produk</a></li>
-        <li style="display:none;"><a href="#" onclick="showSection('cart')">Keranjang</a></li>
-        <li style="display:none;"><a href="#" onclick="showSection('history')">History</a></li>
+        <li style="display:none;"><a href="#" onclick="showSection('cart')">Keranjang</a></li> <!-- Sembunyikan default -->
+        <li style="display:none;"><a href="#" onclick="showSection('history')">History</a></li> <!-- Sembunyikan default -->
         <li><a href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li>
-        <li style="display:none;"><a href="#" onclick="logout()">Logout</a></li>
+        <li style="display:none;"><a href="#" onclick="logout()">Logout</a></li> <!-- Sembunyikan default -->
+        <!-- Link Login/Register akan ditambahkan/dihapus oleh JS di sini -->
       </ul>
     </nav>
   </header>
@@ -32,30 +32,32 @@
       <p id="announcementMessage"></p>
     </div>
 
-    <!-- Tombol Kontak -->
-    <div class="contact-button-container">
-      <a href="https://t.me/skullhosting" target="_blank" class="contact-button">
-        <img src="img/tele.png" alt="Telegram" class="contact-logo">
+    <!-- Tombol Telegram Baru -->
+    <div class="telegram-button-container">
+      <a href="https://t.me/skullhosting" target="_blank" class="telegram-button">
+        <img src="img/tele.png" alt="Telegram Logo" class="telegram-logo">
         <span>Hubungi Kami di Telegram</span>
       </a>
-      <a href="https://wa.me/6285692038079" target="_blank" class="contact-button">
-        <img src="img/wa.png" alt="WhatsApp" class="contact-logo">
-        <span>Hubungi Kami di WhatsApp</span>
+    </div>
+    <div class="telegram-button-container">
+      <a href="https://wa.me/6285692038079" target="_blank" class="telegram-button">
+        <img src="img/tele.png" alt="Telegram Logo" class="telegram-logo">
+        <span>Hubungi Kami di Whatsapp</span>
       </a>
     </div>
 
     <!-- Produk -->
     <section id="products">
       <h2>Produk</h2>
+      <!-- Tambahkan input pencarian di sini -->
       <div class="search-container">
         <input type="text" id="productSearch" placeholder="Cari produk..." onkeyup="filterProducts()">
       </div>
-
+      <!-- Kategori Produk (SEKARANG DI SINI) -->
       <div class="product-categories">
         <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
-        <button class="category-button" onclick="filterProductsByCategory('game_account')">Khusus Promo</button>
+        <button class="category-button" onclick="filterProductsByCategory('game_account')">KHUSUS PROMO</button>
       </div>
-
       <div id="productsContainer" class="products-grid"></div>
     </section>
 
@@ -66,34 +68,41 @@
       <button onclick="checkout()">Checkout</button>
     </section>
 
-    <!-- History -->
+    <!-- Riwayat Pesanan -->
     <section id="history" style="display:none;">
       <h2>Order History</h2>
       <div id="historyItems"></div>
     </section>
 
-    <!-- Rating -->
+    <!-- Semua Rating Produk (sekarang menampilkan statistik global) -->
     <section id="all-ratings" style="display:none;">
       <h2>Semua Rating Produk</h2>
-      <div id="globalRatingStats"></div>
-      <div id="globalRatingsList"></div>
+
+      <div class="rating-summary">
+        <h3>Statistik Rating Keseluruhan</h3>
+        <div id="globalRatingStats"> <!-- ID diubah menjadi globalRatingStats -->
+          <p>Total Rating: <strong id="globalTotalRatingsCount">0</strong></p>
+          <p>Rata-rata Rating: <strong id="globalAverageRating">0.0</strong></p>
+          <p>Bintang 5: <strong id="globalStar5Count">0</strong> (<span id="globalStar5Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar5Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 4: <strong id="globalStar4Count">0</strong> (<span id="globalStar4Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar4Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 3: <strong id="globalStar3Count">0</strong> (<span id="globalStar3Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar3Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 2: <strong id="globalStar2Count">0</strong> (<span id="globalStar2Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar2Bar" class="progress-bar"></div></div></p>
+          <p>Bintang 1: <strong id="globalStar1Count">0</strong> (<span id="globalStar1Percent">0%</span>)
+            <div class="progress-bar-container"><div id="globalStar1Bar" class="progress-bar"></div></div></p>
+        </div>
+      </div>
+
+      <div id="globalRatingsList">
+        <!-- Daftar rating akan dimuat di sini oleh JS -->
+      </div>
     </section>
   </main>
 
-  <!-- PILIH METODE PEMBAYARAN -->
-  <div id="paymentChoiceModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3>Pilih Metode Pembayaran</h3>
-      <div class="row">
-        <button class="payment-option" onclick="openPayment('dana')">DANA</button>
-        <button class="payment-option" onclick="openPayment('gopay')">GoPay</button>
-        <button class="payment-option" onclick="openPayment('qris')">QRIS</button>
-      </div>
-      <button onclick="closePaymentChoice()">Batal</button>
-    </div>
-  </div>
-
-  <!-- MODAL QRIS -->
+  <!-- QRIS Modal -->
   <div id="qrisModal" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Scan QRIS untuk Pembayaran</h3>
@@ -107,21 +116,7 @@
     </div>
   </div>
 
-  <!-- MODAL NOMOR DANA / GOPAY -->
-  <div id="numberPaymentModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3>Transfer ke Nomor Berikut</h3>
-      <p id="numberDisplay" style="font-size:1.2rem;color:#58a6ff;"></p>
-      <p>Setelah transfer, upload bukti pembayaran:</p>
-      <input type="file" id="proofFileAlt" accept="image/*">
-      <div class="row">
-        <button onclick="confirmNumberPayment()">Lanjutkan</button>
-        <button onclick="closeNumberPayment()">Batal</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL EMAIL -->
+  <!-- ✅ Email Modal Baru -->
   <div id="emailModal" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Masukkan Email Anda</h3>
@@ -134,7 +129,7 @@
     </div>
   </div>
 
-  <!-- MODAL RATING -->
+  <!-- Rating Modal -->
   <div id="ratingModal" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Beri Rating untuk Pesanan Anda</h3>
@@ -147,12 +142,16 @@
         <span class="star" data-value="5">⭐</span>
       </div>
       <input type="hidden" id="selectedRating" value="0">
-      <textarea id="ratingComment" placeholder="Tulis komentar (opsional)"></textarea>
+      <textarea id="ratingComment" rows="4" placeholder="Tulis komentar Anda di sini (opsional)..."></textarea>
       <div class="row">
-        <button onclick="submitRating()">Kirim</button>
-        <button onclick="closeRating()">Batal</button>
+        <button type="button" onclick="submitRating()">Kirim Rating</button>
+        <button type="button" onclick="closeRatingModal()">Batal</button>
       </div>
     </div>
   </div>
+
+  <footer>
+    <p>&copy; 2025 STORESKULL</p>
+  </footer>
 </body>
 </html>
