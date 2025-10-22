@@ -3,6 +3,7 @@ let cart = [];
 let currentUser = null;
 let pendingCheckout = null;
 let uploadedProofUrl = null; // simpan bukti transfer sebelum input email
+let selectedPaymentMethod = null; // Tambah variabel untuk metode pembayaran
 let allProducts = []; // Variabel baru untuk menyimpan semua produk
 let currentCategory = 'panel_pterodactyl'; // Default category changed to 'panel_pterodactyl'
 
@@ -184,7 +185,7 @@ function removeFromCart(index) {
   alert("Produk dihapus dari keranjang.");
 }
 
-// ========== QRIS FLOW ==========
+// ========== PEMBAYARAN BARU ==========
 async function buyNow(pid, name, price) {
   if (!currentUser) {
     alert("Silakan login untuk melakukan pembelian.");
@@ -199,7 +200,7 @@ async function buyNow(pid, name, price) {
   }
 
   pendingCheckout = { mode: "single", item: { id: pid, name, price, category: product.category } };
-  await openQris();
+  document.getElementById("paymentMethodModal").style.display = "flex";  // Buka modal pilih metode
 }
 
 async function checkout() {
@@ -220,22 +221,59 @@ async function checkout() {
   }
 
   pendingCheckout = { mode: "cart" };
-  await openQris();
+  document.getElementById("paymentMethodModal").style.display = "flex";  // Buka modal pilih metode
 }
 
-async function openQris() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
-  if (error || !data || !data.qris_image_url) {
-    alert("QRIS belum diatur oleh admin. Silakan hubungi admin.");
+function selectPaymentMethod(method) {
+  selectedPaymentMethod = method;
+  closePaymentMethod();
+  openPaymentModal();  // Buka modal pembayaran sesuai metode
+}
+
+function closePaymentMethod() {
+  document.getElementById("paymentMethodModal").style.display = "none";
+}
+
+async function openPaymentModal() {
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url, dana_account, gopay_account").single();
+  if (error || !data) {
+    alert("Pengaturan pembayaran belum lengkap. Silakan hubungi admin.");
     return;
   }
-  document.getElementById("qrisImage").src = data.qris_image_url;
-  document.getElementById("qrisModal").style.display = "flex";
+
+  const title = document.getElementById("paymentTitle");
+  const details = document.getElementById("paymentDetails");
+
+  if (selectedPaymentMethod === 'qris') {
+    if (!data.qris_image_url) {
+      alert("QRIS belum diatur.");
+      return;
+    }
+    title.textContent = "Scan QRIS untuk Pembayaran";
+    details.innerHTML = `<img id="qrisImage" alt="QRIS" style="width:250px;height:250px;object-fit:contain;" src="${data.qris_image_url}">`;
+  } else if (selectedPaymentMethod === 'dana') {
+    if (!data.dana_account) {
+      alert("Nomor Dana belum diatur.");
+      return;
+    }
+    title.textContent = "Transfer via Dana";
+    details.innerHTML = `<p>Nomor Rekening Dana: <strong>${data.dana_account}</strong></p><p>Silakan transfer ke nomor tersebut.</p>`;
+  } else if (selectedPaymentMethod === 'gopay') {
+    if (!data.gopay_account) {
+      alert("Nomor GoPay belum diatur.");
+      return;
+    }
+    title.textContent = "Transfer via GoPay";
+    details.innerHTML = `<p>Nomor Rekening GoPay: <strong>${data.gopay_account}</strong></p><p>Silakan transfer ke nomor tersebut.</p>`;
+  }
+
+  document.getElementById("paymentModal").style.display = "flex";
 }
 
-function closeQris() {
-  document.getElementById("qrisModal").style.display = "none";
+function closePayment() {
+  document.getElementById("paymentModal").style.display = "none";
   document.getElementById("proofFile").value = "";
+  selectedPaymentMethod = null;
 }
 
 async function confirmPayment() {
@@ -257,8 +295,8 @@ async function confirmPayment() {
   const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
   uploadedProofUrl = urlData.publicUrl;
 
-  // Tutup modal QRIS, buka modal email
-  closeQris();
+  // Tutup modal pembayaran, buka modal email
+  closePayment();
   document.getElementById("emailModal").style.display = "flex";
 }
 
@@ -335,6 +373,7 @@ async function submitEmail() {
   // reset setelah berhasil
   pendingCheckout = null;
   uploadedProofUrl = null;
+  selectedPaymentMethod = null;
 }
 
 async function createOrder(p, proofUrl, email) {
@@ -342,7 +381,7 @@ async function createOrder(p, proofUrl, email) {
     product_id: p.id,
     user_id: currentUser.id,
     username: currentUser.username,
-    payment_method: "qris",
+    payment_method: selectedPaymentMethod,  // Gunakan selectedPaymentMethod
     payment_proof: proofUrl,
     contact_email: email,
     status: "waiting_confirmation",
@@ -357,7 +396,7 @@ async function createOrder(p, proofUrl, email) {
     id: data.id,
     username: currentUser.username,
     product_name: p.name,
-    payment_method: "qris",
+    payment_method: selectedPaymentMethod,
     payment_proof: proofUrl,
     contact_email: email,
     status: "waiting_confirmation",
@@ -402,7 +441,7 @@ async function openRatingModal(orderId, productId) {
   document.getElementById("ratingComment").value = "";
 
   // Cek apakah user sudah pernah memberi rating untuk order ini
-  const { data: existingRating, error: ratingError } = await window.supabase
+  const { data: existingRating, error: ratingCheckError } = await window.supabase
     .from("ratings")
     .select("*")
     .eq("order_id", orderId)
@@ -412,7 +451,7 @@ async function openRatingModal(orderId, productId) {
     // Jika sudah ada, tampilkan rating dan komentar yang sudah ada
     document.getElementById("selectedRating").value = existingRating.rating;
     document.getElementById("ratingComment").value = existingRating.comment || "";
-    // Set bintang yang terpilih berdasarkan rating yang sudah ada
+        // Set bintang yang terpilih berdasarkan rating yang sudah ada
     stars.forEach(star => {
       if (parseInt(star.dataset.value) <= existingRating.rating) {
         star.classList.add("selected");
@@ -659,7 +698,6 @@ function displayGlobalRatingStatistics(ratings) {
     document.getElementById(`globalStar${i}Bar`).style.width = `${percentage}%`;
   }
 }
-
 
 async function loadAnnouncement() {
   const { data, error } = await window.supabase.from("settings").select("announcement").single();
