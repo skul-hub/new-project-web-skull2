@@ -9,42 +9,60 @@
   <script src="config.js"></script>
   <script src="admin-dashboard.js" defer></script>
   <style>
-    /* Tambahan styling agar dropdown + tombol rapi */
-    .order select {
-      margin-right: 0.5rem;
-      min-width: 200px;
+    .store-logo {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      margin-right: 10px;
+      vertical-align: middle;
     }
 
-    .order-actions {
-      margin-top: 0.8rem;
+    .navbar-brand {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 10px;
     }
 
-    .order-actions button {
-      background: #238636;
-      color: white;
-      padding: 0.5rem 1rem;
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #161b22;
+      padding: 1rem 2rem;
+      border-bottom: 2px solid #238636;
+    }
+
+    nav button {
+      background: none;
+      color: #e6edf3;
       border: none;
-      border-radius: 6px;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: 0.3s;
+      border-radius: 6px;
     }
 
-    .order-actions button:hover {
-      background: #2ea043;
+    nav button:hover {
+      background: rgba(88,166,255,0.1);
+      color: #58a6ff;
     }
   </style>
 </head>
 <body>
   <header>
     <nav>
-      <button onclick="showSection('products')">Produk</button>
-      <button onclick="showSection('orders')">Pesanan</button>
-      <button onclick="showSection('ratings')">Rating & Komentar</button> <!-- Tombol baru di navbar -->
-      <button onclick="showSection('settings')">Pengaturan</button>
-      <button onclick="logout()">Logout</button>
+      <div class="navbar-brand">
+        <img src="img/logo.png" alt="Logo" class="store-logo">
+        <h1>STORESKULL</h1>
+      </div>
+      <div class="nav-links">
+        <button onclick="showSection('products')">Produk</button>
+        <button onclick="showSection('orders')">Pesanan</button>
+        <button onclick="showSection('ratings')">Rating & Komentar</button>
+        <button onclick="showSection('settings')">Pengaturan</button>
+        <button onclick="logout()">Logout</button>
+      </div>
     </nav>
   </header>
 
@@ -75,31 +93,14 @@
       <div id="ordersList"></div>
     </section>
 
-    <!-- Rating & Komentar -->
+    <!-- Rating -->
     <section id="ratings" style="display:none;">
       <h2>Rating & Komentar Pengguna</h2>
-
       <div class="rating-summary">
         <h3>Statistik Rating</h3>
-        <div id="ratingStats">
-          <p>Total Rating: <strong id="totalRatingsCount">0</strong></p>
-          <p>Rata-rata Rating: <strong id="averageRating">0.0</strong></p>
-          <p>Bintang 5: <strong id="star5Count">0</strong> (<span id="star5Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star5Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 4: <strong id="star4Count">0</strong> (<span id="star4Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star4Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 3: <strong id="star3Count">0</strong> (<span id="star3Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star3Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 2: <strong id="star2Count">0</strong> (<span id="star2Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star2Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 1: <strong id="star1Count">0</strong> (<span id="star1Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star1Bar" class="progress-bar"></div></div></p>
-        </div>
+        <div id="ratingStats"></div>
       </div>
-
-      <div id="ratingsList">
-        <!-- Daftar rating akan dimuat di sini oleh JS -->
-      </div>
+      <div id="ratingsList"></div>
     </section>
 
     <!-- Pengaturan -->
@@ -113,11 +114,22 @@
 
       <div style="margin-top: 20px;">
         <h3>QRIS Saat Ini:</h3>
-        <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width: 200px; height: auto; border: 1px solid #238636; border-radius: 8px; display: none;">
-        <p id="noQrisMessage" style="color: #a0aec0;">Belum ada gambar QRIS diatur.</p>
+        <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width:200px;border:1px solid #238636;border-radius:8px;display:none;">
+        <p id="noQrisMessage" style="color:#a0aec0;">Belum ada gambar QRIS diatur.</p>
       </div>
 
-      <h2 style="margin-top: 3rem;">Pengaturan Pengumuman</h2>
+      <h2 style="margin-top:3rem;">Pengaturan Pembayaran DANA & GoPay</h2>
+      <form id="paymentSettingsForm" onsubmit="savePaymentSettings(event)">
+        <label for="danaNumber">Nomor DANA:</label>
+        <input type="text" id="danaNumber" placeholder="08xxxxxxxxxx">
+
+        <label for="gopayNumber">Nomor GoPay:</label>
+        <input type="text" id="gopayNumber" placeholder="08xxxxxxxxxx">
+
+        <button type="submit" class="admin-button">Simpan Nomor</button>
+      </form>
+
+      <h2 style="margin-top:3rem;">Pengaturan Pengumuman</h2>
       <form id="announcementForm" onsubmit="saveAnnouncement(event)">
         <label for="announcementText">Teks Pengumuman:</label>
         <textarea id="announcementText" rows="5" placeholder="Masukkan teks pengumuman di sini..."></textarea>
