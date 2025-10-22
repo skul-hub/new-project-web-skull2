@@ -13,6 +13,7 @@
   <header>
     <nav class="navbar">
       <div class="navbar-brand">
+        <img src="img/logo.jpeg" alt="Store Logo" class="store-logo"> <!-- Logo store di samping STORESKULL -->
         <h1><a href="user-dashboard.html">STORESKULL</a></h1>
       </div>
       <ul class="nav-links">
@@ -102,6 +103,22 @@
     </section>
   </main>
 
+  <!-- Modal Pilihan Pembayaran Baru -->
+  <div id="paymentMethodModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Pilih Metode Pembayaran</h3>
+      <p>Silakan pilih metode pembayaran Anda:</p>
+      <div class="payment-options">
+        <button onclick="selectPaymentMethod('dana')">Dana</button>
+        <button onclick="selectPaymentMethod('gopay')">GoPay</button>
+        <button onclick="selectPaymentMethod('qris')">QRIS</button>
+      </div>
+      <div class="row">
+        <button type="button" onclick="closePaymentMethodModal()">Batal</button>
+      </div>
+    </div>
+  </div>
+
   <!-- QRIS Modal -->
   <div id="qrisModal" class="modal" style="display:none;">
     <div class="modal-content">
@@ -112,6 +129,20 @@
       <div class="row">
         <button type="button" onclick="confirmPayment()">Lanjutkan</button>
         <button type="button" onclick="closeQris()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal untuk Dana/GoPay -->
+  <div id="accountModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3 id="accountModalTitle">Transfer ke Dana</h3>
+      <p id="accountNumber">Nomor: <strong id="accountNumberValue"></strong></p>
+      <p>Setelah transfer, upload bukti pembayaran:</p>
+      <input type="file" id="accountProofFile" accept="image/*">
+      <div class="row">
+        <button type="button" onclick="confirmAccountPayment()">Lanjutkan</button>
+        <button type="button" onclick="closeAccountModal()">Batal</button>
       </div>
     </div>
   </div>
