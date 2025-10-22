@@ -13,6 +13,7 @@
   <header>
     <nav class="navbar">
       <div class="navbar-brand">
+        <img src="img/logo.jpeg" alt="Store Logo" class="navbar-logo">
         <h1><a href="user-dashboard.html">STORESKULL</a></h1>
       </div>
       <ul class="nav-links">
@@ -41,8 +42,8 @@
     </div>
     <div class="telegram-button-container">
       <a href="https://wa.me/6285692038079" target="_blank" class="telegram-button">
-        <img src="img/tele.png" alt="Telegram Logo" class="telegram-logo">
-        <span>Hubungi Kami di Whatsapp</span>
+        <img src="img/whatsapp.png" alt="WhatsApp Logo" class="telegram-logo">
+        <span>Hubungi Kami di WhatsApp</span>
       </a>
     </div>
 
@@ -102,21 +103,35 @@
     </section>
   </main>
 
-  <!-- QRIS Modal -->
-  <div id="qrisModal" class="modal" style="display:none;">
+  <!-- Modal Pilih Metode Pembayaran -->
+  <div id="paymentMethodModal" class="modal" style="display:none;">
     <div class="modal-content">
-      <h3>Scan QRIS untuk Pembayaran</h3>
-      <img id="qrisImage" alt="QRIS" style="width:250px;height:250px;object-fit:contain;">
-      <p>Setelah transfer, upload bukti pembayaran:</p>
-      <input type="file" id="proofFile" accept="image/*">
-      <div class="row">
-        <button type="button" onclick="confirmPayment()">Lanjutkan</button>
-        <button type="button" onclick="closeQris()">Batal</button>
+      <h3>Pilih Metode Pembayaran</h3>
+      <p>Silakan pilih metode pembayaran Anda:</p>
+      <button onclick="selectPaymentMethod('dana')">Dana</button>
+      <button onclick="selectPaymentMethod('gopay')">GoPay</button>
+      <button onclick="selectPaymentMethod('qris')">QRIS</button>
+      <div class="row" style="margin-top: 1rem;">
+        <button type="button" onclick="closePaymentMethod()">Batal</button>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Email Modal Baru -->
+  <!-- Modal Pembayaran (untuk Dana, GoPay, QRIS) -->
+  <div id="paymentModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3 id="paymentTitle">Pembayaran</h3>
+      <div id="paymentDetails"></div>  <!-- Dinamis: gambar QRIS atau nomor rekening -->
+      <p>Setelah transfer, upload bukti pembayaran:</p>
+      <input type="file" id="proofFile" accept="image/*">
+      <div class="row">
+        <button type="button" onclick="confirmPayment()">Lanjutkan</button>
+        <button type="button" onclick="closePayment()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Modal -->
   <div id="emailModal" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Masukkan Email Anda</h3>
