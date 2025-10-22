@@ -5,6 +5,7 @@ let pendingCheckout = null;
 let uploadedProofUrl = null; // simpan bukti transfer sebelum input email
 let allProducts = []; // Variabel baru untuk menyimpan semua produk
 let currentCategory = 'panel_pterodactyl'; // Default category changed to 'panel_pterodactyl'
+let selectedPaymentMethod = null; // Variabel untuk metode pembayaran yang dipilih
 
 async function checkUserAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
@@ -184,7 +185,7 @@ function removeFromCart(index) {
   alert("Produk dihapus dari keranjang.");
 }
 
-// ========== QRIS FLOW ==========
+// ========== PEMBAYARAN BARU: Modal Pilihan Metode ==========
 async function buyNow(pid, name, price) {
   if (!currentUser) {
     alert("Silakan login untuk melakukan pembelian.");
@@ -199,7 +200,7 @@ async function buyNow(pid, name, price) {
   }
 
   pendingCheckout = { mode: "single", item: { id: pid, name, price, category: product.category } };
-  await openQris();
+  openPaymentMethodModal();
 }
 
 async function checkout() {
@@ -220,7 +221,25 @@ async function checkout() {
   }
 
   pendingCheckout = { mode: "cart" };
-  await openQris();
+  openPaymentMethodModal();
+}
+
+function openPaymentMethodModal() {
+  document.getElementById("paymentMethodModal").style.display = "flex";
+}
+
+function closePaymentMethodModal() {
+  document.getElementById("paymentMethodModal").style.display = "none";
+}
+
+function selectPaymentMethod(method) {
+  selectedPaymentMethod = method;
+  closePaymentMethodModal();
+  if (method === 'qris') {
+    openQris();
+  } else {
+    openAccountModal(method);
+  }
 }
 
 async function openQris() {
@@ -262,6 +281,46 @@ async function confirmPayment() {
   document.getElementById("emailModal").style.display = "flex";
 }
 
+async function openAccountModal(method) {
+  const { data, error } = await window.supabase.from("settings").select(`${method}_number`).single();
+  if (error || !data || !data[`${method}_number`]) {
+    alert(`Nomor ${method.toUpperCase()} belum diatur oleh admin. Silakan hubungi admin.`);
+    return;
+  }
+  document.getElementById("accountModalTitle").textContent = `Transfer ke ${method.toUpperCase()}`;
+  document.getElementById("accountNumberValue").textContent = data[`${method}_number`];
+  document.getElementById("accountModal").style.display = "flex";
+}
+
+function closeAccountModal() {
+  document.getElementById("accountModal").style.display = "none";
+  document.getElementById("accountProofFile").value = "";
+}
+
+async function confirmAccountPayment() {
+  const file = document.getElementById("accountProofFile").files[0];
+  if (!file) return alert("Upload bukti transfer dulu.");
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran bukti transfer terlalu besar. Maksimal 2MB.");
+    return;
+  }
+
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const path = `${currentUser.id}/${fileName}`;
+  const { error: upErr } = await window.supabase.storage.from("proofs").upload(path, file);
+  if (upErr) {
+    alert("Gagal upload bukti: " + upErr.message);
+    return;
+  }
+  const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
+  uploadedProofUrl = urlData.publicUrl;
+
+  // Tutup modal account, buka modal email
+  closeAccountModal();
+  document.getElementById("emailModal").style.display = "flex";
+}
+
 function closeEmail() {
   document.getElementById("emailModal").style.display = "none";
   uploadedProofUrl = null;
@@ -287,7 +346,7 @@ async function submitEmail() {
       closeEmail();
       return;
     }
-    const order = await createOrder(pendingCheckout.item, uploadedProofUrl, email);
+    const order = await createOrder(pendingCheckout.item, uploadedProofUrl, email, selectedPaymentMethod);
     if (order) {
       ordersToNotify.push(order);
       if (product.category === 'game_account') {
@@ -302,7 +361,7 @@ async function submitEmail() {
         closeEmail();
         return;
       }
-      const order = await createOrder(p, uploadedProofUrl, email);
+      const order = await createOrder(p, uploadedProofUrl, email, selectedPaymentMethod);
       if (order) {
         ordersToNotify.push(order);
         if (product.category === 'game_account') {
@@ -335,14 +394,15 @@ async function submitEmail() {
   // reset setelah berhasil
   pendingCheckout = null;
   uploadedProofUrl = null;
+  selectedPaymentMethod = null;
 }
 
-async function createOrder(p, proofUrl, email) {
+async function createOrder(p, proofUrl, email, paymentMethod) {
   const { data, error } = await window.supabase.from("orders").insert([{
     product_id: p.id,
     user_id: currentUser.id,
     username: currentUser.username,
-    payment_method: "qris",
+    payment_method: paymentMethod,
     payment_proof: proofUrl,
     contact_email: email,
     status: "waiting_confirmation",
@@ -357,7 +417,7 @@ async function createOrder(p, proofUrl, email) {
     id: data.id,
     username: currentUser.username,
     product_name: p.name,
-    payment_method: "qris",
+    payment_method: paymentMethod,
     payment_proof: proofUrl,
     contact_email: email,
     status: "waiting_confirmation",
@@ -545,7 +605,7 @@ async function loadHistory() {
         ratingButton = `<button onclick="openRatingModal('${o.id}', '${o.product_id}')" class="admin-button" style="margin-top: 10px;">${buttonText}</button>`;
       }
 
-      div.innerHTML = `
+           div.innerHTML = `
         <p><strong>Order ID:</strong> ${o.id}</p>
         <p><strong>Produk:</strong> ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
         <p><strong>Status:</strong> ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
@@ -659,7 +719,6 @@ function displayGlobalRatingStatistics(ratings) {
     document.getElementById(`globalStar${i}Bar`).style.width = `${percentage}%`;
   }
 }
-
 
 async function loadAnnouncement() {
   const { data, error } = await window.supabase.from("settings").select("announcement").single();
