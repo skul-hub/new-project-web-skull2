@@ -3,143 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - STORESKULL</title>
+  <title>User Dashboard - STORESKULL</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin-dashboard.js" defer></script>
-  <style>
-    .store-logo {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-      margin-right: 10px;
-      vertical-align: middle;
-    }
-
-    .navbar-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #161b22;
-      padding: 1rem 2rem;
-      border-bottom: 2px solid #238636;
-    }
-
-    nav button {
-      background: none;
-      color: #e6edf3;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.3s;
-      border-radius: 6px;
-    }
-
-    nav button:hover {
-      background: rgba(88,166,255,0.1);
-      color: #58a6ff;
-    }
-  </style>
+  <script src="user-dashboard.js" defer></script>
 </head>
 <body>
   <header>
-    <nav>
+    <nav class="navbar">
       <div class="navbar-brand">
         <img src="img/logo.png" alt="Logo" class="store-logo">
-        <h1>STORESKULL</h1>
+        <h1><a href="user-dashboard.html">STORESKULL</a></h1>
       </div>
-      <div class="nav-links">
-        <button onclick="showSection('products')">Produk</button>
-        <button onclick="showSection('orders')">Pesanan</button>
-        <button onclick="showSection('ratings')">Rating & Komentar</button>
-        <button onclick="showSection('settings')">Pengaturan</button>
-        <button onclick="logout()">Logout</button>
-      </div>
+      <ul class="nav-links">
+        <li><a href="#" onclick="showSection('products')">Produk</a></li>
+        <li style="display:none;"><a href="#" onclick="showSection('cart')">Keranjang</a></li>
+        <li style="display:none;"><a href="#" onclick="showSection('history')">History</a></li>
+        <li><a href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li>
+        <li style="display:none;"><a href="#" onclick="logout()">Logout</a></li>
+      </ul>
     </nav>
   </header>
 
   <main>
+    <!-- Pengumuman -->
+    <div id="announcementContainer" style="display:none; background: #238636; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center;">
+      <p id="announcementMessage"></p>
+    </div>
+
+    <!-- Tombol Kontak -->
+    <div class="contact-button-container">
+      <a href="https://t.me/skullhosting" target="_blank" class="contact-button">
+        <img src="img/tele.png" alt="Telegram" class="contact-logo">
+        <span>Hubungi Kami di Telegram</span>
+      </a>
+      <a href="https://wa.me/6285692038079" target="_blank" class="contact-button">
+        <img src="img/wa.png" alt="WhatsApp" class="contact-logo">
+        <span>Hubungi Kami di WhatsApp</span>
+      </a>
+    </div>
+
     <!-- Produk -->
     <section id="products">
-      <h2>Tambah Produk</h2>
-      <form id="addProductForm" onsubmit="addProduct(event)">
-        <input type="text" id="productName" placeholder="Nama produk" required>
-        <input type="number" id="productPrice" placeholder="Harga (Rp)" required>
-        <select id="productCategory" required>
-          <option value="">Pilih Kategori</option>
-          <option value="panel_pterodactyl">Panel Pterodactyl</option>
-          <option value="game_account">Jual Akun Game</option>
-        </select>
-        <input type="number" id="productStock" placeholder="Stok (hanya untuk Akun Game)" min="0" value="0">
-        <input type="file" id="productImage" accept="image/*" required>
-        <button type="submit" class="admin-button">Tambah Produk</button>
-      </form>
+      <h2>Produk</h2>
+      <div class="search-container">
+        <input type="text" id="productSearch" placeholder="Cari produk..." onkeyup="filterProducts()">
+      </div>
 
-      <h2>Daftar Produk</h2>
-      <div id="productsList"></div>
+      <div class="product-categories">
+        <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
+        <button class="category-button" onclick="filterProductsByCategory('game_account')">Khusus Promo</button>
+      </div>
+
+      <div id="productsContainer" class="products-grid"></div>
     </section>
 
-    <!-- Pesanan -->
-    <section id="orders" style="display:none;">
-      <h2>Daftar Pesanan</h2>
-      <div id="ordersList"></div>
+    <!-- Keranjang -->
+    <section id="cart" style="display:none;">
+      <h2>Keranjang Kamu</h2>
+      <div id="cartItems"></div>
+      <button onclick="checkout()">Checkout</button>
+    </section>
+
+    <!-- History -->
+    <section id="history" style="display:none;">
+      <h2>Order History</h2>
+      <div id="historyItems"></div>
     </section>
 
     <!-- Rating -->
-    <section id="ratings" style="display:none;">
-      <h2>Rating & Komentar Pengguna</h2>
-      <div class="rating-summary">
-        <h3>Statistik Rating</h3>
-        <div id="ratingStats"></div>
-      </div>
-      <div id="ratingsList"></div>
-    </section>
-
-    <!-- Pengaturan -->
-    <section id="settings" style="display:none;">
-      <h2>Pengaturan QRIS</h2>
-      <form id="uploadQrisForm" onsubmit="uploadQrisImage(event)">
-        <label for="qrisImageFile">Upload Gambar QRIS Baru:</label>
-        <input type="file" id="qrisImageFile" accept="image/*" required>
-        <button type="submit" class="admin-button">Upload & Simpan QRIS</button>
-      </form>
-
-      <div style="margin-top: 20px;">
-        <h3>QRIS Saat Ini:</h3>
-        <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width:200px;border:1px solid #238636;border-radius:8px;display:none;">
-        <p id="noQrisMessage" style="color:#a0aec0;">Belum ada gambar QRIS diatur.</p>
-      </div>
-
-      <h2 style="margin-top:3rem;">Pengaturan Pembayaran DANA & GoPay</h2>
-      <form id="paymentSettingsForm" onsubmit="savePaymentSettings(event)">
-        <label for="danaNumber">Nomor DANA:</label>
-        <input type="text" id="danaNumber" placeholder="08xxxxxxxxxx">
-
-        <label for="gopayNumber">Nomor GoPay:</label>
-        <input type="text" id="gopayNumber" placeholder="08xxxxxxxxxx">
-
-        <button type="submit" class="admin-button">Simpan Nomor</button>
-      </form>
-
-      <h2 style="margin-top:3rem;">Pengaturan Pengumuman</h2>
-      <form id="announcementForm" onsubmit="saveAnnouncement(event)">
-        <label for="announcementText">Teks Pengumuman:</label>
-        <textarea id="announcementText" rows="5" placeholder="Masukkan teks pengumuman di sini..."></textarea>
-        <button type="submit" class="admin-button">Simpan Pengumuman</button>
-      </form>
+    <section id="all-ratings" style="display:none;">
+      <h2>Semua Rating Produk</h2>
+      <div id="globalRatingStats"></div>
+      <div id="globalRatingsList"></div>
     </section>
   </main>
 
-  <footer>
-    <p>&copy; 2025 STORESKULL</p>
-  </footer>
+  <!-- PILIH METODE PEMBAYARAN -->
+  <div id="paymentChoiceModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Pilih Metode Pembayaran</h3>
+      <div class="row">
+        <button class="payment-option" onclick="openPayment('dana')">DANA</button>
+        <button class="payment-option" onclick="openPayment('gopay')">GoPay</button>
+        <button class="payment-option" onclick="openPayment('qris')">QRIS</button>
+      </div>
+      <button onclick="closePaymentChoice()">Batal</button>
+    </div>
+  </div>
+
+  <!-- MODAL QRIS -->
+  <div id="qrisModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Scan QRIS untuk Pembayaran</h3>
+      <img id="qrisImage" alt="QRIS" style="width:250px;height:250px;object-fit:contain;">
+      <p>Setelah transfer, upload bukti pembayaran:</p>
+      <input type="file" id="proofFile" accept="image/*">
+      <div class="row">
+        <button type="button" onclick="confirmPayment()">Lanjutkan</button>
+        <button type="button" onclick="closeQris()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NOMOR DANA / GOPAY -->
+  <div id="numberPaymentModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Transfer ke Nomor Berikut</h3>
+      <p id="numberDisplay" style="font-size:1.2rem;color:#58a6ff;"></p>
+      <p>Setelah transfer, upload bukti pembayaran:</p>
+      <input type="file" id="proofFileAlt" accept="image/*">
+      <div class="row">
+        <button onclick="confirmNumberPayment()">Lanjutkan</button>
+        <button onclick="closeNumberPayment()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EMAIL -->
+  <div id="emailModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Masukkan Email Anda</h3>
+      <p style="color:red;"><strong>⚠️ Pastikan email aktif!</strong> Produk akan dikirim ke email ini.</p>
+      <input type="email" id="emailInput" placeholder="contoh: nama@email.com" required>
+      <div class="row">
+        <button type="button" onclick="submitEmail()">Kirim</button>
+        <button type="button" onclick="closeEmail()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL RATING -->
+  <div id="ratingModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Beri Rating untuk Pesanan Anda</h3>
+      <p>Produk: <strong id="ratingProductName"></strong></p>
+      <div class="rating-stars" style="font-size: 2rem; cursor: pointer;">
+        <span class="star" data-value="1">⭐</span>
+        <span class="star" data-value="2">⭐</span>
+        <span class="star" data-value="3">⭐</span>
+        <span class="star" data-value="4">⭐</span>
+        <span class="star" data-value="5">⭐</span>
+      </div>
+      <input type="hidden" id="selectedRating" value="0">
+      <textarea id="ratingComment" placeholder="Tulis komentar (opsional)"></textarea>
+      <div class="row">
+        <button onclick="submitRating()">Kirim</button>
+        <button onclick="closeRating()">Batal</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
