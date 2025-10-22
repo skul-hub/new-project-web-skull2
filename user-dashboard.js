@@ -1,193 +1,220 @@
+let currentUser = null;
+let currentProduct = null;
+let uploadedProofUrl = null;
+let pendingCheckout = null;
+
 document.addEventListener("DOMContentLoaded", () => {
-  checkLogin();
+  checkSession();
+  loadAnnouncement();
   loadProducts();
 });
 
-async function checkLogin() {
-  const session = localStorage.getItem("admin_session");
-  if (!session) {
-    window.location.href = "login.html";
+// ================= LOGIN CEK =================
+function checkSession() {
+  const session = localStorage.getItem("user_session");
+  if (session) {
+    const user = JSON.parse(session);
+    currentUser = user;
+    document.querySelectorAll(".nav-links li").forEach(li => li.style.display = "block");
   }
 }
 
-// ========== LOGOUT ==========
+// ================= LOGOUT =================
 function logout() {
-  localStorage.removeItem("admin_session");
+  localStorage.removeItem("user_session");
   window.location.href = "login.html";
 }
 
-// ========== SHOW SECTION ==========
-function showSection(section) {
-  document.querySelectorAll("main section").forEach((sec) => (sec.style.display = "none"));
-  document.getElementById(section).style.display = "block";
-  if (section === "settings") {
-    loadQrisSettings();
-    loadPaymentSettings();
-    loadAnnouncement();
+// ================= PENGUMUMAN =================
+async function loadAnnouncement() {
+  const { data, error } = await window.supabase.from("settings").select("announcement").single();
+  if (error && error.code !== "PGRST116") return;
+  if (data && data.announcement) {
+    document.getElementById("announcementMessage").innerText = data.announcement;
+    document.getElementById("announcementContainer").style.display = "block";
   }
 }
 
-// ========== TAMBAH PRODUK ==========
-async function addProduct(e) {
-  e.preventDefault();
-  const name = document.getElementById("productName").value.trim();
-  const price = parseInt(document.getElementById("productPrice").value);
-  const category = document.getElementById("productCategory").value;
-  const stock = parseInt(document.getElementById("productStock").value) || 0;
-  const file = document.getElementById("productImage").files[0];
-
-  if (!name || !price || !category || !file) return alert("Isi semua kolom!");
-
-  const filePath = `products/${Date.now()}_${file.name}`;
-  const { error: uploadError } = await window.supabase.storage.from("product_images").upload(filePath, file);
-  if (uploadError) return alert("Gagal upload gambar: " + uploadError.message);
-
-  const { data: urlData } = window.supabase.storage.from("product_images").getPublicUrl(filePath);
-  const imageUrl = urlData.publicUrl;
-
-  const { error } = await window.supabase.from("products").insert([
-    {
-      name,
-      price,
-      category,
-      stock,
-      image_url: imageUrl,
-    },
-  ]);
-
-  if (error) return alert("Gagal menambahkan produk: " + error.message);
-  alert("Produk berhasil ditambahkan!");
-  e.target.reset();
-  loadProducts();
-}
-
-// ========== LOAD PRODUK ==========
+// ================= PRODUK =================
 async function loadProducts() {
   const { data, error } = await window.supabase.from("products").select("*").order("id", { ascending: false });
   if (error) return console.error(error);
 
-  const container = document.getElementById("productsList");
+  const container = document.getElementById("productsContainer");
   container.innerHTML = "";
+
   data.forEach((p) => {
     const div = document.createElement("div");
-    div.className = "product-item";
+    div.className = "product-card";
     div.innerHTML = `
-      <img src="${p.image_url}" alt="${p.name}" class="product-thumb">
-      <div>
-        <h3>${p.name}</h3>
-        <p>Rp ${p.price.toLocaleString()}</p>
-        <p>Kategori: ${p.category}</p>
-        ${p.category === "game_account" ? `<p>Stok: ${p.stock}</p>` : ""}
-        <button onclick="deleteProduct(${p.id})">Hapus</button>
-      </div>
+      <img src="${p.image_url}" alt="${p.name}">
+      <h3>${p.name}</h3>
+      <p>Rp ${p.price.toLocaleString()}</p>
+      <button onclick='buyProduct(${JSON.stringify(p)})'>Beli Sekarang</button>
     `;
     container.appendChild(div);
   });
 }
 
-// ========== HAPUS PRODUK ==========
-async function deleteProduct(id) {
-  if (!confirm("Yakin ingin menghapus produk ini?")) return;
-  const { error } = await window.supabase.from("products").delete().eq("id", id);
-  if (error) return alert("Gagal hapus: " + error.message);
-  alert("Produk berhasil dihapus.");
-  loadProducts();
-}
-
-// ========== QRIS UPLOAD ==========
-async function uploadQrisImage(e) {
-  e.preventDefault();
-  const file = document.getElementById("qrisImageFile").files[0];
-  if (!file) return alert("Pilih gambar QRIS dulu!");
-
-  const filePath = `qris/${Date.now()}_${file.name}`;
-  const { error: uploadError } = await window.supabase.storage.from("qris_images").upload(filePath, file);
-  if (uploadError) return alert("Gagal upload gambar: " + uploadError.message);
-
-  const { data: urlData } = window.supabase.storage.from("qris_images").getPublicUrl(filePath);
-  const imageUrl = urlData.publicUrl;
-
-  const { data: existing } = await window.supabase.from("settings").select("id").limit(1).single();
-  if (existing) {
-    await window.supabase.from("settings").update({ qris_image_url: imageUrl }).eq("id", existing.id);
-  } else {
-    await window.supabase.from("settings").insert([{ qris_image_url: imageUrl }]);
-  }
-
-  alert("QRIS berhasil disimpan!");
-  loadQrisSettings();
-}
-
-// ========== QRIS LOAD ==========
-async function loadQrisSettings() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
-  if (error && error.code !== "PGRST116") {
-    console.error(error);
+// ================= BELI SEKARANG =================
+function buyProduct(p) {
+  if (!currentUser) {
+    alert("Silakan login terlebih dahulu!");
     return;
   }
+  currentProduct = p;
+  pendingCheckout = { product: p };
+  document.getElementById("paymentChoiceModal").style.display = "flex";
+}
 
-  const img = document.getElementById("currentQrisImage");
-  const msg = document.getElementById("noQrisMessage");
+// ================= PEMILIHAN METODE PEMBAYARAN =================
+function closePaymentChoice() {
+  document.getElementById("paymentChoiceModal").style.display = "none";
+}
 
-  if (data && data.qris_image_url) {
-    img.src = data.qris_image_url;
-    img.style.display = "block";
-    msg.style.display = "none";
+async function openPayment(method) {
+  closePaymentChoice();
+  const { data, error } = await window.supabase.from("settings").select("dana_number, gopay_number, qris_image_url").single();
+  if (error) return alert("Gagal memuat metode pembayaran.");
+
+  if (method === "qris") {
+    document.getElementById("qrisImage").src = data.qris_image_url;
+    document.getElementById("qrisModal").style.display = "flex";
   } else {
-    img.style.display = "none";
-    msg.style.display = "block";
+    const number = method === "dana" ? data.dana_number : data.gopay_number;
+    if (!number) return alert("Nomor belum diatur admin.");
+    document.getElementById("numberDisplay").innerHTML = `${method.toUpperCase()}: <strong>${number}</strong>`;
+    document.getElementById("numberPaymentModal").dataset.method = method;
+    document.getElementById("numberPaymentModal").style.display = "flex";
   }
 }
 
-// ========== SIMPAN NOMOR DANA & GOPAY ==========
-async function savePaymentSettings(e) {
-  e.preventDefault();
-  const dana = document.getElementById("danaNumber").value.trim();
-  const gopay = document.getElementById("gopayNumber").value.trim();
+// ================= CLOSE MODAL NOMOR =================
+function closeNumberPayment() {
+  document.getElementById("numberPaymentModal").style.display = "none";
+  document.getElementById("proofFileAlt").value = "";
+}
 
-  const { data: existing, error: e1 } = await window.supabase.from("settings").select("id").limit(1).single();
-  let error;
-  if (existing) {
-    ({ error } = await window.supabase
-      .from("settings")
-      .update({ dana_number: dana, gopay_number: gopay })
-      .eq("id", existing.id));
+// ================= KONFIRMASI PEMBAYARAN NOMOR =================
+async function confirmNumberPayment() {
+  const file = document.getElementById("proofFileAlt").files[0];
+  if (!file) return alert("Upload bukti transfer dulu.");
+
+  const method = document.getElementById("numberPaymentModal").dataset.method;
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const path = `${currentUser.id}/${fileName}`;
+  const { error: upErr } = await window.supabase.storage.from("proofs").upload(path, file);
+  if (upErr) return alert("Gagal upload bukti.");
+
+  const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
+  uploadedProofUrl = urlData.publicUrl;
+  pendingCheckout.payment_method = method;
+
+  closeNumberPayment();
+  document.getElementById("emailModal").style.display = "flex";
+}
+
+// ================= QRIS =================
+function closeQris() {
+  document.getElementById("qrisModal").style.display = "none";
+  document.getElementById("proofFile").value = "";
+}
+
+async function confirmPayment() {
+  const file = document.getElementById("proofFile").files[0];
+  if (!file) return alert("Upload bukti transfer dulu.");
+
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const path = `${currentUser.id}/${fileName}`;
+  const { error: upErr } = await window.supabase.storage.from("proofs").upload(path, file);
+  if (upErr) return alert("Gagal upload bukti.");
+
+  const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
+  uploadedProofUrl = urlData.publicUrl;
+  pendingCheckout.payment_method = "qris";
+
+  closeQris();
+  document.getElementById("emailModal").style.display = "flex";
+}
+
+// ================= EMAIL =================
+function closeEmail() {
+  document.getElementById("emailModal").style.display = "none";
+  document.getElementById("emailInput").value = "";
+}
+
+async function submitEmail() {
+  const email = document.getElementById("emailInput").value.trim();
+  if (!email) return alert("Masukkan email aktif terlebih dahulu.");
+
+  const product = pendingCheckout.product;
+  await createOrder(product, uploadedProofUrl, email);
+  document.getElementById("emailModal").style.display = "none";
+  alert("Pesanan berhasil dikirim! Tunggu konfirmasi admin.");
+}
+
+// ================= CREATE ORDER =================
+async function createOrder(p, proofUrl, email) {
+  const method = pendingCheckout?.payment_method || "qris";
+  const { data, error } = await window.supabase.from("orders").insert([
+    {
+      product_id: p.id,
+      user_id: currentUser.id,
+      username: currentUser.username,
+      payment_method: method,
+      payment_proof: proofUrl,
+      contact_email: email,
+      status: "waiting_confirmation",
+    },
+  ]);
+
+  if (error) {
+    alert("Gagal membuat order: " + error.message);
   } else {
-    ({ error } = await window.supabase.from("settings").insert([{ dana_number: dana, gopay_number: gopay }]));
+    loadHistory();
   }
-
-  if (error) return alert("Gagal menyimpan: " + error.message);
-  alert("Nomor pembayaran berhasil disimpan!");
-  loadPaymentSettings();
 }
 
-// ========== LOAD NOMOR DANA & GOPAY ==========
-async function loadPaymentSettings() {
-  const { data, error } = await window.supabase.from("settings").select("dana_number, gopay_number").single();
-  if (error && error.code !== "PGRST116") return console.error(error);
-  document.getElementById("danaNumber").value = data?.dana_number || "";
-  document.getElementById("gopayNumber").value = data?.gopay_number || "";
+// ================= HISTORY =================
+async function loadHistory() {
+  const { data, error } = await window.supabase
+    .from("orders")
+    .select("*, products(name)")
+    .eq("user_id", currentUser.id)
+    .order("id", { ascending: false });
+
+  if (error) return console.error(error);
+  const container = document.getElementById("historyItems");
+  container.innerHTML = "";
+
+  data.forEach((order) => {
+    const div = document.createElement("div");
+    div.className = "order-item";
+    div.innerHTML = `
+      <h4>${order.products?.name || "Produk Dihapus"}</h4>
+      <p>Metode: ${order.payment_method.toUpperCase()}</p>
+      <p>Status: ${order.status}</p>
+      <a href="${order.payment_proof}" target="_blank">Lihat Bukti Transfer</a>
+    `;
+    container.appendChild(div);
+  });
 }
 
-// ========== PENGUMUMAN ==========
-async function saveAnnouncement(e) {
-  e.preventDefault();
-  const text = document.getElementById("announcementText").value.trim();
-  const { data: existing } = await window.supabase.from("settings").select("id").limit(1).single();
-
-  let error;
-  if (existing) {
-    ({ error } = await window.supabase.from("settings").update({ announcement: text }).eq("id", existing.id));
-  } else {
-    ({ error } = await window.supabase.from("settings").insert([{ announcement: text }]));
-  }
-
-  if (error) return alert("Gagal menyimpan pengumuman: " + error.message);
-  alert("Pengumuman berhasil disimpan!");
+// ================= FILTER PRODUK =================
+function filterProducts() {
+  const query = document.getElementById("productSearch").value.toLowerCase();
+  const cards = document.querySelectorAll(".product-card");
+  cards.forEach(card => {
+    const name = card.querySelector("h3").textContent.toLowerCase();
+    card.style.display = name.includes(query) ? "block" : "none";
+  });
 }
 
-async function loadAnnouncement() {
-  const { data, error } = await window.supabase.from("settings").select("announcement").single();
-  if (error && error.code !== "PGRST116") return console.error(error);
-  document.getElementById("announcementText").value = data?.announcement || "";
+function filterProductsByCategory(category) {
+  const buttons = document.querySelectorAll(".category-button");
+  buttons.forEach(btn => btn.classList.remove("active"));
+  event.target.classList.add("active");
+
+  const { data, error } = window.supabase.from("products").select("*").eq("category", category);
 }
+
