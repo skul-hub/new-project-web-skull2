@@ -117,6 +117,20 @@
         <p id="noQrisMessage" style="color: #a0aec0;">Belum ada gambar QRIS diatur.</p>
       </div>
 
+      <h2 style="margin-top: 3rem;">Pengaturan Nomor Dana</h2>
+      <form id="danaForm" onsubmit="saveDanaNumber(event)">
+        <label for="danaNumber">Nomor Dana:</label>
+        <input type="text" id="danaNumber" placeholder="Masukkan nomor Dana" required>
+        <button type="submit" class="admin-button">Simpan Dana</button>
+      </form>
+
+      <h2 style="margin-top: 3rem;">Pengaturan Nomor GoPay</h2>
+      <form id="gopayForm" onsubmit="saveGopayNumber(event)">
+        <label for="gopayNumber">Nomor GoPay:</label>
+        <input type="text" id="gopayNumber" placeholder="Masukkan nomor GoPay" required>
+        <button type="submit" class="admin-button">Simpan GoPay</button>
+      </form>
+
       <h2 style="margin-top: 3rem;">Pengaturan Pengumuman</h2>
       <form id="announcementForm" onsubmit="saveAnnouncement(event)">
         <label for="announcementText">Teks Pengumuman:</label>
