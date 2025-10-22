@@ -82,8 +82,7 @@ async function addProduct(event) {
     alert("Lengkapi semua field!");
     return;
   }
-
-  if (category === 'game_account' && (isNaN(stock) || stock < 0)) {
+    if (category === 'game_account' && (isNaN(stock) || stock < 0)) {
     alert("Stok harus angka non-negatif untuk Akun Game.");
     return;
   }
@@ -160,7 +159,6 @@ async function updateProductStock(id, newStock) {
   alert("Stok produk berhasil diupdate.");
   loadProducts();
 }
-
 
 async function loadOrders() {
   const { data, error } = await window.supabase
@@ -240,7 +238,7 @@ async function saveOrderStatus(orderId) {
         product_name: productData?.name || "Unknown Product",
         payment_proof: orderData.payment_proof,
         status: orderData.status,
-        payment_method: "qris",
+        payment_method: orderData.payment_method, // Gunakan payment_method dari order
         contact_email: orderData.contact_email, // Kirim contact_email
       }],
     }),
@@ -251,15 +249,19 @@ async function saveOrderStatus(orderId) {
 }
 
 async function loadQrisSettings() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url, announcement").single();
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url, dana_number, gopay_number, announcement").single();
   const currentQrisImage = document.getElementById("currentQrisImage");
   const noQrisMessage = document.getElementById("noQrisMessage");
+  const danaNumberInput = document.getElementById("danaNumber");
+  const gopayNumberInput = document.getElementById("gopayNumber");
   const announcementTextarea = document.getElementById("announcementText");
 
   if (error && error.code !== 'PGRST116') {
     console.error("Error loading settings:", error);
     currentQrisImage.style.display = 'none';
     noQrisMessage.style.display = 'block';
+    danaNumberInput.value = "";
+    gopayNumberInput.value = "";
     announcementTextarea.value = "";
     return;
   }
@@ -273,11 +275,14 @@ async function loadQrisSettings() {
       currentQrisImage.style.display = 'none';
       noQrisMessage.style.display = 'block';
     }
-    // Set teks pengumuman
+    danaNumberInput.value = data.dana_number || "";
+    gopayNumberInput.value = data.gopay_number || "";
     announcementTextarea.value = data.announcement || "";
   } else {
     currentQrisImage.style.display = 'none';
     noQrisMessage.style.display = 'block';
+    danaNumberInput.value = "";
+    gopayNumberInput.value = "";
     announcementTextarea.value = "";
   }
 }
@@ -335,6 +340,78 @@ async function uploadQrisImage(event) {
 
   alert("Gambar QRIS berhasil diupload dan disimpan!");
   document.getElementById("uploadQrisForm").reset();
+  loadQrisSettings();
+}
+
+async function saveDanaNumber(event) {
+  event.preventDefault();
+  const danaNumber = document.getElementById("danaNumber").value.trim();
+
+  if (!danaNumber) {
+    alert("Masukkan nomor Dana!");
+    return;
+  }
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ dana_number: danaNumber, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ dana_number: danaNumber }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan nomor Dana: " + error.message);
+    return;
+  }
+
+  alert("Nomor Dana berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function saveGopayNumber(event) {
+  event.preventDefault();
+  const gopayNumber = document.getElementById("gopayNumber").value.trim();
+
+  if (!gopayNumber) {
+    alert("Masukkan nomor GoPay!");
+    return;
+  }
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ gopay_number: gopayNumber, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ gopay_number: gopayNumber }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan nomor GoPay: " + error.message);
+    return;
+  }
+
+  alert("Nomor GoPay berhasil disimpan!");
   loadQrisSettings();
 }
 
