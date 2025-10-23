@@ -285,6 +285,14 @@ async function loadQrisSettings() {
     gopayNumberInput.value = "";
     announcementTextarea.value = "";
   }
+
+  const promoTextarea = document.getElementById("promoMessages");
+  if (data && data.promo_messages) {
+    promoTextarea.value = data.promo_messages.join('\n'); // Array ke string dengan newline
+  } else {
+    promoTextarea.value = "";
+  }
+}
 }
 
 async function uploadQrisImage(event) {
@@ -557,6 +565,34 @@ function displayRatingStatistics(ratings) {
     document.getElementById(`star${i}Percent`).textContent = `${percentage}%`;
     document.getElementById(`star${i}Bar`).style.width = `${percentage}%`;
   }
+}
+
+async function savePromoMessages(event) {
+  event.preventDefault();
+  const promoText = document.getElementById("promoMessages").value.trim();
+  const promoMessages = promoText ? promoText.split('\n').map(msg => msg.trim()).filter(msg => msg) : [];
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ promo_messages: promoMessages, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ promo_messages: promoMessages }]));
+  }
+  if (error) {
+    alert("Gagal menyimpan promo: " + error.message);
+    return;
+  }
+  alert("Promo berhasil disimpan!");
+  loadQrisSettings();
 }
 
 async function logout() {
