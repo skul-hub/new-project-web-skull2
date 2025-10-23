@@ -139,7 +139,7 @@ function filterProductsByCategory(category) {
   filterProducts(); // Re-filter based on new category and existing search term
 }
 
-async function addToCart(id, name, price) {
+   async function addToCart(id, name, price) {
      if (!currentUser) {
        alert("Silakan login untuk menambahkan produk ke keranjang.");
        window.location.href = "signin.html";
@@ -160,6 +160,7 @@ async function addToCart(id, name, price) {
      updateCartDisplay();
      alert("Ditambahkan ke Keranjang By Bangskull!");
    }
+   
 
 function updateCartDisplay() {
   const total = cart.reduce((sum, p) => sum + p.price, 0);
