@@ -249,7 +249,7 @@ async function saveOrderStatus(orderId) {
 }
 
 async function loadQrisSettings() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url, dana_number, gopay_number, announcement").single();
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url, dana_number, gopay_number, announcement, promo_messages").single();
   const currentQrisImage = document.getElementById("currentQrisImage");
   const noQrisMessage = document.getElementById("noQrisMessage");
   const danaNumberInput = document.getElementById("danaNumber");
@@ -263,6 +263,7 @@ async function loadQrisSettings() {
     danaNumberInput.value = "";
     gopayNumberInput.value = "";
     announcementTextarea.value = "";
+    document.getElementById("promoMessages").value = ""; // Reset promo jika error
     return;
   }
 
@@ -278,22 +279,24 @@ async function loadQrisSettings() {
     danaNumberInput.value = data.dana_number || "";
     gopayNumberInput.value = data.gopay_number || "";
     announcementTextarea.value = data.announcement || "";
+
+    // Tambahkan load promo
+    const promoTextarea = document.getElementById("promoMessages");
+    if (data.promo_messages && Array.isArray(data.promo_messages)) {
+      promoTextarea.value = data.promo_messages.join('\n'); // Array ke string dengan newline
+    } else {
+      promoTextarea.value = "";
+    }
   } else {
     currentQrisImage.style.display = 'none';
     noQrisMessage.style.display = 'block';
     danaNumberInput.value = "";
     gopayNumberInput.value = "";
     announcementTextarea.value = "";
+    document.getElementById("promoMessages").value = ""; // Reset promo jika tidak ada data
   }
+}
 
-  const promoTextarea = document.getElementById("promoMessages");
-  if (data && data.promo_messages) {
-    promoTextarea.value = data.promo_messages.join('\n'); // Array ke string dengan newline
-  } else {
-    promoTextarea.value = "";
-  }
-}
-}
 
 async function uploadQrisImage(event) {
   event.preventDefault();
