@@ -171,8 +171,15 @@ function updateCartDisplay() {
     cartDiv.innerHTML = "<p>Keranjang kosong.</p>";
   } else {
     cart.forEach((p, index) => {
+      // Cari gambar produk dari allProducts berdasarkan id
+      const product = allProducts.find(prod => prod.id === p.id);
+      const productImage = product ? product.image : "img/placeholder.png"; // Gunakan placeholder jika tidak ada gambar
+
       const item = document.createElement("p");
-      item.innerHTML = `${p.name} - Rp ${p.price.toLocaleString()} <button onclick="removeFromCart(${index})">Hapus</button>`;
+      item.innerHTML = `
+        <img src="${productImage}" alt="${p.name}" class="cart-product-image">
+        ${p.name} - Rp ${p.price.toLocaleString()} <button onclick="removeFromCart(${index})">Hapus</button>
+      `;
       cartDiv.appendChild(item);
     });
     cartDiv.innerHTML += `<p><strong>Total: Rp ${total.toLocaleString()}</strong></p>`;
@@ -444,6 +451,8 @@ async function openRatingModal(orderId, productId) {
     .eq("id", productId)
     .single();
 
+  // Lanjutan dari kode sebelumnya (setelah bagian yang terpotong di openRatingModal)
+
   if (productError || !productData) {
     console.error("Error fetching product name for rating:", productError);
     alert("Gagal memuat informasi produk untuk rating.");
@@ -605,7 +614,7 @@ async function loadHistory() {
         ratingButton = `<button onclick="openRatingModal('${o.id}', '${o.product_id}')" class="admin-button" style="margin-top: 10px;">${buttonText}</button>`;
       }
 
-           div.innerHTML = `
+      div.innerHTML = `
         <p><strong>Order ID:</strong> ${o.id}</p>
         <p><strong>Produk:</strong> ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
         <p><strong>Status:</strong> ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
