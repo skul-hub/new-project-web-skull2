@@ -61,6 +61,22 @@ async function checkUserAuth() {
       return;
     }
     currentUser = userData;
+    // Tambahkan di checkUserAuth, setelah currentUser = userData;
+if (currentUser) {
+  // Subscribe ke perubahan orders untuk user ini
+  window.supabase
+    .channel('orders-updates')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${currentUser.id}` }, (payload) => {
+      const newStatus = payload.new.status;
+      const oldStatus = payload.old.status;
+      if (newStatus !== oldStatus) {
+        showToast(`📢 Status Pesanan ${payload.new.id} Diupdate: ${newStatus.replace(/_/g, ' ').toUpperCase()}`, 'success');
+        loadHistory(); // Refresh history otomatis
+      }
+    })
+    .subscribe();
+}
+    
     console.log("User logged in:", currentUser.username);
 
     // Tampilkan elemen navbar yang hanya untuk user login
