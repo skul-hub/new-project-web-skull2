@@ -6,6 +6,7 @@ let uploadedProofUrl = null; // simpan bukti transfer sebelum input email
 let allProducts = []; // Variabel baru untuk menyimpan semua produk
 let currentCategory = 'panel_pterodactyl'; // Default category changed to 'panel_pterodactyl'
 let selectedPaymentMethod = null; // Variabel untuk metode pembayaran yang dipilih
+let previousStatuses = {}; // Simpan status sebelumnya
 
 async function checkUserAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
@@ -72,6 +73,8 @@ async function checkUserAuth() {
   // Selalu tampilkan bagian produk dan muat produk
   showSection("products");
   loadAnnouncement(); // Panggil fungsi untuk memuat pengumuman
+    loadPromoSlider(); // Tambahkan ini
+   checkNewPromo(); // Tambahkan inidd
 }
 
 async function loadProducts() {
@@ -80,6 +83,7 @@ async function loadProducts() {
 
   allProducts = data || []; // Simpan semua produk yang dimuat
   filterProductsByCategory(currentCategory); // Tampilkan produk berdasarkan kategori saat ini
+  loadPopularProducts(); // Tambahkan ini
 }
 
 function displayProducts(productsToDisplay) {
@@ -634,6 +638,8 @@ async function loadHistory() {
         ratingButton = `<button onclick="openRatingModal('${o.id}', '${o.product_id}')" class="admin-button" style="margin-top: 10px;">${buttonText}</button>`;
       }
 
+      
+
       div.innerHTML = `
         <p><strong>Order ID:</strong> ${o.id}</p>
         <p><strong>Produk:</strong> ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
@@ -650,6 +656,13 @@ async function loadHistory() {
       `;
       historyDiv.appendChild(div);
     }
+    data.forEach(o => {
+    const prevStatus = previousStatuses[o.id];
+    if (prevStatus && prevStatus !== o.status) {
+      showToast(`📢 Status Pesanan ${o.id} Diupdate: ${o.status.replace(/_/g, ' ').toUpperCase()}`, 'success');
+    }
+    previousStatuses[o.id] = o.status; // Update status
+  });   
   } else {
     historyDiv.innerHTML = "<p>Belum ada riwayat pesanan.</p>";
   }
@@ -796,10 +809,106 @@ function showSection(section) {
   if (section === "history") loadHistory();
   if (section === "all-ratings") loadAllRatings();
 }
+// Tambahkan di akhir file, sebelum window.onload
+async function loadPromoSlider() {
+  // Ambil data promo dari database (asumsi kolom 'promo_messages' di tabel 'settings' sebagai JSON array)
+  const { data, error } = await window.supabase.from("settings").select("promo_messages").single();
+  let messages = [];
+  if (data && data.promo_messages) {
+    messages = data.promo_messages; // Array seperti ["Diskon 50%!", "Event Spesial!"]
+  } else {
+    // Fallback hardcoded jika belum ada di DB
+    messages = ["Diskon 50% untuk Panel Pterodactyl!", "Event Spesial Akun Game!", "Update Panel Terbaru!"];
+  }
+  const slidesContainer = document.querySelector(".promo-slides");
+  slidesContainer.innerHTML = "";
+  messages.forEach(msg => {
+    const slide = document.createElement("div");
+    slide.className = "promo-slide";
+    slide.textContent = msg;
+    slidesContainer.appendChild(slide);
+  });
+}
 
-window.onload = () => {
-  checkUserAuth();
-};
+// Tambahkan di akhir file
+async function loadPopularProducts() {
+  // Query produk berdasarkan jumlah order terbanyak
+  const { data, error } = await window.supabase
+    .from("orders")
+    .select("product_id, products(name, price, image, category)")
+    .eq("status", "done") // Hanya order selesai
+    .order("created_at", { ascending: false });
+
+  if (error) return console.error(error);
+
+  // Hitung frekuensi produk
+  const productCount = {};
+  data.forEach(order => {
+    const pid = order.product_id;
+    productCount[pid] = (productCount[pid] || 0) + 1;
+  });
+
+  // Sort berdasarkan frekuensi tertinggi, ambil top 4
+  const sortedProducts = Object.keys(productCount)
+    .sort((a, b) => productCount[b] - productCount[a])
+    .slice(0, 4)
+    .map(pid => data.find(o => o.product_id === pid)?.products)
+    .filter(p => p); // Filter null
+
+  const container = document.getElementById("popularProductsContainer");
+  container.innerHTML = "";
+  if (sortedProducts.length > 0) {
+    sortedProducts.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `
+        <h3>${p.name}</h3>
+        <p>Rp ${p.price.toLocaleString()}</p>
+        <img src="${p.image}" alt="${p.name}">
+        <button onclick="buyNow('${p.id}', '${p.name.replace(/'/g, "\\'")}', ${p.price})">Beli Sekarang</button>
+      `;
+      container.appendChild(div);
+    });
+  } else {
+    container.innerHTML = "<p>Belum ada produk terlaris.</p>";
+  }
+}
+// Tambahkan di akhir file
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast-notification ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => document.body.removeChild(toast), 500);
+  }, 3000); // Hilang setelah 3 detik
+}
+// Notifikasi promo baru (cek saat load)
+async function checkNewPromo() {
+  const lastPromo = localStorage.getItem('lastPromo');
+  const { data, error } = await window.supabase.from("settings").select("promo_messages").single();
+  if (data && data.promo_messages && JSON.stringify(data.promo_messages) !== lastPromo) {
+    showToast("🎉 Promo Baru Tersedia! Cek Banner Atas.", 'success');
+    localStorage.setItem('lastPromo', JSON.stringify(data.promo_messages));
+  }
+}
+
+
+
+ // Tambahkan di akhir file user-dashboard.js, ganti window.onload yang lama
+    window.onload = () => {
+      loadCartFromStorage(); // Kode existing
+      checkUserAuth(); // Kode existing
+      // Tambahkan ini untuk load previousStatuses
+      const storedStatuses = localStorage.getItem('previousStatuses');
+      if (storedStatuses) previousStatuses = JSON.parse(storedStatuses);
+    };
+    // Tambahkan ini setelah window.onload untuk simpan previousStatuses saat unload
+    window.onbeforeunload = () => {
+      localStorage.setItem('previousStatuses', JSON.stringify(previousStatuses));
+    };
 
 async function logout() {
   await window.supabase.auth.signOut();
