@@ -138,6 +138,13 @@
         <textarea id="announcementText" rows="5" placeholder="Masukkan teks pengumuman di sini..."></textarea>
         <button type="submit" class="admin-button">Simpan Pengumuman</button>
       </form>
+
+      <h2 style="margin-top: 3rem;">Pengaturan Promo Banner</h2>
+<form id="promoForm" onsubmit="savePromoMessages(event)">
+  <label for="promoMessages">Pesan Promo (satu per baris):</label>
+  <textarea id="promoMessages" rows="5" placeholder="Diskon 50% untuk Panel Pterodactyl!&#10;Event Spesial Akun Game!&#10;Update Panel Terbaru!"></textarea>
+  <button type="submit" class="admin-button">Simpan Promo</button>
+</form>
     </section>
   </main>
 
