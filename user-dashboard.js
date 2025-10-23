@@ -140,27 +140,26 @@ function filterProductsByCategory(category) {
 }
 
 async function addToCart(id, name, price) {
-  if (!currentUser) {
-    alert("Silakan login untuk menambahkan produk ke keranjang.");
-    window.location.href = "signin.html";
-    return;
-  }
-
-  const product = allProducts.find(p => p.id === id);
-  if (product.category === 'game_account' && product.stock <= 0) {
-    alert("Stok produk ini sudah habis!");
-    return;
-  }
-
-  const existingItem = cart.find(item => item.id === id);
-  if (existingItem) {
-    alert("Produk ini sudah ada di keranjang!");
-    return;
-  }
-  cart.push({ id, name, price, category: product.category }); // Add category to cart item
-  updateCartDisplay();
-  alert("Ditambahkan ke Keranjang By Bangskull!");
-}
+     if (!currentUser) {
+       alert("Silakan login untuk menambahkan produk ke keranjang.");
+       window.location.href = "signin.html";
+       return;
+     }
+     const product = allProducts.find(p => p.id === id);
+     if (product.category === 'game_account' && product.stock <= 0) {
+       alert("Stok produk ini sudah habis!");
+       return;
+     }
+     const existingItem = cart.find(item => item.id === id);
+     if (existingItem) {
+       alert("Produk ini sudah ada di keranjang!");
+       return;
+     }
+     cart.push({ id, name, price, category: product.category });
+     saveCartToStorage(); // Simpan ke localStorage
+     updateCartDisplay();
+     alert("Ditambahkan ke Keranjang By Bangskull!");
+   }
 
 function updateCartDisplay() {
   const total = cart.reduce((sum, p) => sum + p.price, 0);
@@ -187,10 +186,20 @@ function updateCartDisplay() {
 }
 
 function removeFromCart(index) {
-  cart.splice(index, 1);
-  updateCartDisplay();
-  alert("Produk dihapus dari keranjang.");
-}
+     // Konfirmasi sebelum hapus
+     if (!confirm("Apakah yakin ingin menghapus produk ini dari keranjang?")) {
+       return; // Jika tidak yakin, jangan hapus
+     }
+     cart.splice(index, 1);
+     saveCartToStorage(); // Simpan ke localStorage setelah hapus
+     updateCartDisplay();
+     alert("Produk dihapus dari keranjang.");
+   }
+   // Update window.onload untuk load cart
+   window.onload = () => {
+     loadCartFromStorage(); // Load cart dari localStorage
+     checkUserAuth();
+   };
 
 // ========== PEMBAYARAN BARU: Modal Pilihan Metode ==========
 async function buyNow(pid, name, price) {
@@ -230,6 +239,16 @@ async function checkout() {
   pendingCheckout = { mode: "cart" };
   openPaymentMethodModal();
 }
+
+function saveCartToStorage() {
+     localStorage.setItem('userCart', JSON.stringify(cart));
+   }
+   function loadCartFromStorage() {
+     const storedCart = localStorage.getItem('userCart');
+     if (storedCart) {
+       cart = JSON.parse(storedCart);
+     }
+   }
 
 function openPaymentMethodModal() {
   document.getElementById("paymentMethodModal").style.display = "flex";
