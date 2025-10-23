@@ -1229,6 +1229,26 @@ footer {
   }
 }
 
+   /* Styling untuk gambar produk di keranjang */
+   .cart-product-image {
+     width: 40px; /* Ukuran kecil */
+     height: 40px;
+     border-radius: 50%; /* Bulat seperti logo */
+     object-fit: cover;
+     margin-right: 10px; /* Jarak dari teks */
+     border: 1px solid #238636; /* Border hijau untuk konsistensi */
+   }
+
+   /* Responsif untuk mobile */
+   @media (max-width: 768px) {
+     .cart-product-image {
+       width: 30px;
+       height: 30px;
+       margin-right: 8px;
+     }
+   }
+   
+
 @media (max-width: 768px) {
   /* Pastikan font size minimal 16px untuk input, select, textarea agar tidak zoom di mobile */
   input[type="text"],
