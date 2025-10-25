@@ -1387,9 +1387,11 @@ footer {
   overflow: hidden; /* Tambahkan ini untuk memotong gambar agar sesuai bentuk lingkaran */
 }
   .chat-icon {
-    width: 25px;
-    height: 25px;
-  }
+  width: 30px;
+  height: 30px;
+  filter: brightness(0) invert(1); /* Membuat logo putih agar kontras */
+  border-radius: 50%; /* Tambahkan ini jika gambar perlu dibuat bulat secara eksplisit */
+}
 }
 
 /* Responsif */
