@@ -1328,6 +1328,61 @@ footer {
   background: #d32f2f;
 }
 
+/* Floating Chat Buttons */
+.floating-chat-buttons {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000; /* Pastikan di atas elemen lain */
+}
+
+.chat-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #25d366; /* Hijau untuk WhatsApp */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.chat-button.telegram {
+  background-color: #0088cc; /* Biru untuk Telegram */
+}
+
+.chat-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.chat-icon {
+  width: 30px;
+  height: 30px;
+  filter: brightness(0) invert(1); /* Membuat logo putih agar kontras */
+}
+
+/* Responsif untuk mobile */
+@media (max-width: 768px) {
+  .floating-chat-buttons {
+    bottom: 15px;
+    left: 15px;
+  }
+  .chat-button {
+    width: 50px;
+    height: 50px;
+  }
+  .chat-icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
 /* Responsif */
 @media (max-width: 768px) {
   .toast-notification {
