@@ -113,10 +113,17 @@ function displayProducts(productsToDisplay) {
   const container = document.getElementById("productsContainer");
   container.innerHTML = "";
   if (productsToDisplay && productsToDisplay.length > 0) {
-    productsToDisplay.forEach((p) => {
+    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    // Pisahkan produk wishlist dan non-wishlist
+    const wishlistProducts = productsToDisplay.filter(p => wishlist.includes(p.id));
+    const otherProducts = productsToDisplay.filter(p => !wishlist.includes(p.id));
+    // Gabungkan: wishlist di atas
+    const sortedProducts = [...wishlistProducts, ...otherProducts];
+
+    sortedProducts.forEach((p) => {
       const safeName = p.name.replace(/'/g, "\\'");
       let wishlistIcon = '<i class="fas fa-heart"></i>';
-      if (JSON.parse(localStorage.getItem('wishlist') || '[]').includes(p.id)) {
+      if (wishlist.includes(p.id)) {
         wishlistIcon = '<i class="fas fa-heart" style="color: red;"></i>';
       }
       const div = document.createElement("div");
