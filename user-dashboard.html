@@ -62,7 +62,8 @@
         <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
         <button class="category-button" onclick="filterProductsByCategory('game_account')">KHUSUS PROMO</button>
       </div>
-      <select id="sortSelect" onchange="sortProducts()">
+     <select id="sortSelect" onchange="sortProducts()">
+  <option value="none">Tidak Ada Sort (Default)</option>
   <option value="name">Nama A-Z</option>
   <option value="price-low">Harga Rendah ke Tinggi</option>
   <option value="price-high">Harga Tinggi ke Rendah</option>
@@ -208,5 +209,7 @@
   <footer>
     <p>&copy; 2025 STORESKULL</p>
   </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 </body>
 </html>
