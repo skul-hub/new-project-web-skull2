@@ -114,11 +114,14 @@ function displayProducts(productsToDisplay) {
   container.innerHTML = "";
   if (productsToDisplay && productsToDisplay.length > 0) {
     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    // Pisahkan produk wishlist dan non-wishlist
-    const wishlistProducts = productsToDisplay.filter(p => wishlist.includes(p.id));
-    const otherProducts = productsToDisplay.filter(p => !wishlist.includes(p.id));
-    // Gabungkan: wishlist di atas
-    const sortedProducts = [...wishlistProducts, ...otherProducts];
+    let sortedProducts = productsToDisplay;
+    if (currentCategory === 'panel_pterodactyl') {
+      // Prioritas wishlist di atas hanya untuk panel_pterodactyl
+      const wishlistProducts = productsToDisplay.filter(p => wishlist.includes(p.id));
+      const otherProducts = productsToDisplay.filter(p => !wishlist.includes(p.id));
+      sortedProducts = [...wishlistProducts, ...otherProducts];
+    }
+    // Untuk game_account, urutan normal tanpa prioritas wishlist
 
     sortedProducts.forEach((p) => {
       const safeName = p.name.replace(/'/g, "\\'");
@@ -154,6 +157,7 @@ function displayProducts(productsToDisplay) {
     container.innerHTML = "<p>Tidak ada produk yang ditemukan dalam kategori ini.</p>";
   }
 }
+
 
 function filterProducts() {
   const searchTerm = document.getElementById("productSearch").value.toLowerCase();
