@@ -148,8 +148,19 @@ function displayProducts(productsToDisplay) {
         ${cartButton}
         <button onclick="toggleWishlist('${p.id}')">${wishlistIcon}</button>
       `;
+      // Perbaikan: Tambahkan div particles dengan id unik
+      const particlesDiv = document.createElement("div");
+      particlesDiv.id = `particles-${p.id}`;
+      particlesDiv.style.position = 'absolute';
+      particlesDiv.style.top = '0';
+      particlesDiv.style.left = '0';
+      particlesDiv.style.width = '100%';
+      particlesDiv.style.height = '100%';
+      particlesDiv.style.pointerEvents = 'none';
+      div.style.position = 'relative';
+      div.appendChild(particlesDiv);
       div.addEventListener('mouseenter', () => {
-        particlesJS(div.id || 'particles-js', {
+        particlesJS(`particles-${p.id}`, {
           particles: { number: { value: 20 }, color: { value: '#58a6ff' }, shape: { type: 'star' } }
         });
       });
@@ -952,6 +963,7 @@ async function checkNewPromo() {
   function toggleTheme() {
   document.body.classList.toggle('light-mode');
   localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+  document.body.style.transition = 'background 0.5s ease, color 0.5s ease';
 }
 
 function toggleWishlist(productId) {
