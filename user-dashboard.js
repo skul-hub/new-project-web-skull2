@@ -100,12 +100,13 @@ AOS.init();
 }
 
 async function loadProducts() {
+  const container = document.getElementById("productsContainer");
+  container.innerHTML = '<div class="skeleton"></div>'.repeat(6); // Skeleton loading
   const { data, error } = await window.supabase.from("products").select("*").eq("active", true);
   if (error) return console.error(error);
-
-  allProducts = data || []; // Simpan semua produk yang dimuat
-  filterProductsByCategory(currentCategory); // Tampilkan produk berdasarkan kategori saat ini
-  loadPopularProducts(); // Tambahkan ini
+  allProducts = data || [];
+  setTimeout(() => filterProductsByCategory(currentCategory), 500); // Delay untuk efek
+  loadPopularProducts();
 }
 
 function displayProducts(productsToDisplay) {
@@ -114,12 +115,16 @@ function displayProducts(productsToDisplay) {
   if (productsToDisplay && productsToDisplay.length > 0) {
     productsToDisplay.forEach((p) => {
       const safeName = p.name.replace(/'/g, "\\'");
+      let wishlistIcon = '<i class="fas fa-heart"></i>';
+      if (JSON.parse(localStorage.getItem('wishlist') || '[]').includes(p.id)) {
+        wishlistIcon = '<i class="fas fa-heart" style="color: red;"></i>';
+      }
       const div = document.createElement("div");
       div.className = "product";
+      div.setAttribute('data-aos', 'fade-up');
       let stockInfo = '';
       let buyButton = `<button onclick="buyNow('${p.id}', '${safeName}', ${p.price})">Beli Sekarang</button>`;
       let cartButton = `<button onclick="addToCart('${p.id}', '${safeName}', ${p.price})">Tambah ke Keranjang</button>`;
-
       if (p.category === 'game_account') {
         stockInfo = `<p>Stok: <strong>${p.stock}</strong></p>`;
         if (p.stock <= 0) {
@@ -127,7 +132,6 @@ function displayProducts(productsToDisplay) {
           cartButton = `<button disabled>Stok Habis</button>`;
         }
       }
-
       div.innerHTML = `
         <h3>${p.name}</h3>
         <p>Rp ${p.price.toLocaleString()}</p>
@@ -135,6 +139,7 @@ function displayProducts(productsToDisplay) {
         <img src="${p.image}" alt="${p.name}">
         ${buyButton}
         ${cartButton}
+        <button onclick="toggleWishlist('${p.id}')">${wishlistIcon}</button>
       `;
       container.appendChild(div);
     });
@@ -833,13 +838,11 @@ function showSection(section) {
 }
 // Tambahkan di akhir file, sebelum window.onload
 async function loadPromoSlider() {
-  // Ambil data promo dari database (asumsi kolom 'promo_messages' di tabel 'settings' sebagai JSON array)
   const { data, error } = await window.supabase.from("settings").select("promo_messages").single();
   let messages = [];
   if (data && data.promo_messages) {
-    messages = data.promo_messages; // Array seperti ["Diskon 50%!", "Event Spesial!"]
+    messages = data.promo_messages;
   } else {
-    // Fallback hardcoded jika belum ada di DB
     messages = ["Diskon 50% untuk Panel Pterodactyl!", "Event Spesial Akun Game!", "Update Panel Terbaru!"];
   }
   const slidesContainer = document.querySelector(".promo-slides");
@@ -850,6 +853,23 @@ async function loadPromoSlider() {
     slide.textContent = msg;
     slidesContainer.appendChild(slide);
   });
+  // Tambahkan countdown
+  const countdownEl = document.createElement('div');
+  countdownEl.id = 'promoCountdown';
+  document.getElementById('promo-slider').appendChild(countdownEl);
+  startCountdown(new Date('2025-12-31').getTime());
+}
+
+function startCountdown(endTime) {
+  setInterval(() => {
+    const now = new Date().getTime();
+    const distance = endTime - now;
+    if (distance > 0) {
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      document.getElementById('promoCountdown').innerHTML = `Promo Berakhir: ${days}d ${hours}h`;
+    }
+  }, 1000);
 }
 
 // Tambahkan di akhir file
@@ -915,6 +935,31 @@ async function checkNewPromo() {
     showToast("🎉 Promo Baru Tersedia! Cek Banner Atas.", 'success');
     localStorage.setItem('lastPromo', JSON.stringify(data.promo_messages));
   }
+}
+
+  function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+}
+
+function toggleWishlist(productId) {
+  let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+  if (wishlist.includes(productId)) {
+    wishlist = wishlist.filter(id => id !== productId);
+  } else {
+    wishlist.push(productId);
+  }
+  localStorage.setItem('wishlist', JSON.stringify(wishlist));
+  loadProducts(); // Refresh untuk update icon
+}
+
+function sortProducts() {
+  const sortBy = document.getElementById('sortSelect').value;
+  let sorted = [...allProducts];
+  if (sortBy === 'price-low') sorted.sort((a, b) => a.price - b.price);
+  else if (sortBy === 'price-high') sorted.sort((a, b) => b.price - a.price);
+  else sorted.sort((a, b) => a.name.localeCompare(b.name));
+  displayProducts(sorted);
 }
 
 
