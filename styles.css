@@ -1471,6 +1471,29 @@ header {
   font-weight: bold;
 }
 
+#sortSelect {
+  padding: 0.8rem;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #0d1117, #161b22);
+  color: #e6edf3;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(88, 166, 255, 0.2);
+}
+#sortSelect:hover {
+  border-color: #58a6ff;
+  box-shadow: 0 6px 15px rgba(88, 166, 255, 0.4);
+  transform: translateY(-2px);
+}
+#sortSelect:focus {
+  outline: none;
+  border-color: #58a6ff;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
+}
+
 /* Responsif */
 @media (max-width: 768px) {
   .toast-notification {
