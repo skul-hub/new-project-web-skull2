@@ -116,13 +116,10 @@ function displayProducts(productsToDisplay) {
     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
     let sortedProducts = productsToDisplay;
     if (currentCategory === 'panel_pterodactyl') {
-      // Prioritas wishlist di atas hanya untuk panel_pterodactyl
       const wishlistProducts = productsToDisplay.filter(p => wishlist.includes(p.id));
       const otherProducts = productsToDisplay.filter(p => !wishlist.includes(p.id));
       sortedProducts = [...wishlistProducts, ...otherProducts];
     }
-    // Untuk game_account, urutan normal tanpa prioritas wishlist
-
     sortedProducts.forEach((p) => {
       const safeName = p.name.replace(/'/g, "\\'");
       let wishlistIcon = '<i class="fas fa-heart"></i>';
@@ -151,6 +148,11 @@ function displayProducts(productsToDisplay) {
         ${cartButton}
         <button onclick="toggleWishlist('${p.id}')">${wishlistIcon}</button>
       `;
+      div.addEventListener('mouseenter', () => {
+        particlesJS(div.id || 'particles-js', {
+          particles: { number: { value: 20 }, color: { value: '#58a6ff' }, shape: { type: 'star' } }
+        });
+      });
       container.appendChild(div);
     });
   } else {
@@ -208,15 +210,12 @@ function updateCartDisplay() {
   const total = cart.reduce((sum, p) => sum + p.price, 0);
   const cartDiv = document.getElementById("cartItems");
   cartDiv.innerHTML = "";
-
   if (cart.length === 0) {
     cartDiv.innerHTML = "<p>Keranjang kosong.</p>";
   } else {
     cart.forEach((p, index) => {
-      // Cari gambar produk dari allProducts berdasarkan id
       const product = allProducts.find(prod => prod.id === p.id);
-      const productImage = product ? product.image : "img/placeholder.png"; // Gunakan placeholder jika tidak ada gambar
-
+      const productImage = product ? product.image : "img/placeholder.png";
       const item = document.createElement("p");
       item.innerHTML = `
         <img src="${productImage}" alt="${p.name}" class="cart-product-image">
@@ -226,6 +225,8 @@ function updateCartDisplay() {
     });
     cartDiv.innerHTML += `<p><strong>Total: Rp ${total.toLocaleString()}</strong></p>`;
   }
+  cartDiv.style.animation = 'pulse 0.5s ease';
+  setTimeout(() => cartDiv.style.animation = '', 500);
 }
 
 function removeFromCart(index) {
@@ -930,13 +931,13 @@ async function loadPopularProducts() {
 function showToast(message, type = 'success') {
   const toast = document.createElement('div');
   toast.className = `toast-notification ${type}`;
-  toast.textContent = message;
+  toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}`;
   document.body.appendChild(toast);
   setTimeout(() => toast.classList.add('show'), 100);
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => document.body.removeChild(toast), 500);
-  }, 3000); // Hilang setelah 3 detik
+  }, 4000);
 }
 // Notifikasi promo baru (cek saat load)
 async function checkNewPromo() {
@@ -966,12 +967,18 @@ function toggleWishlist(productId) {
 
 function sortProducts() {
   const sortBy = document.getElementById('sortSelect').value;
-  let sorted = [...allProducts];
-  if (sortBy === 'price-low') sorted.sort((a, b) => a.price - b.price);
-  else if (sortBy === 'price-high') sorted.sort((a, b) => b.price - a.price);
-  else sorted.sort((a, b) => a.name.localeCompare(b.name));
-  displayProducts(sorted);
+  let productsToSort = allProducts.filter(p => p.category === currentCategory);
+  if (sortBy === 'none') {
+    filterProductsByCategory(currentCategory);
+    return;
+  }
+  if (sortBy === 'price-low') productsToSort.sort((a, b) => a.price - b.price);
+  else if (sortBy === 'price-high') productsToSort.sort((a, b) => b.price - a.price);
+  else productsToSort.sort((a, b) => a.name.localeCompare(b.name));
+  displayProducts(productsToSort);
 }
+
+
 
 
 
