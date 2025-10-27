@@ -50,45 +50,47 @@
    
 
     <!-- Produk -->
-    <section id="products">
+    <section id="products" data-aos="fade-up">
       <h2>Produk</h2>
       <!-- Tambahkan input pencarian di sini -->
       <div class="search-container">
         <input type="text" id="productSearch" placeholder="Cari produk..." onkeyup="filterProducts()">
       </div>
       <!-- Kategori Produk (SEKARANG DI SINI) -->
+      
       <div class="product-categories">
         <button class="category-button active" onclick="filterProductsByCategory('panel_pterodactyl')">Panel Pterodactyl</button>
         <button class="category-button" onclick="filterProductsByCategory('game_account')">KHUSUS PROMO</button>
       </div>
-      <div id="productsContainer" class="products-grid"></div>
-      <!-- Tambahkan di dalam section id="products" -->
-<h2>🔥 Produk Terlaris</h2>
-<div id="popularProductsContainer" class="products-grid"></div>
-
       <select id="sortSelect" onchange="sortProducts()">
   <option value="name">Nama A-Z</option>
   <option value="price-low">Harga Rendah ke Tinggi</option>
   <option value="price-high">Harga Tinggi ke Rendah</option>
 </select>
 <div id="productsContainer" class="products-masonry"></div>
+      <div id="productsContainer" class="products-grid"></div>
+      <!-- Tambahkan di dalam section id="products" -->
+<h2>🔥 Produk Terlaris</h2>
+<div id="popularProductsContainer" class="products-grid"></div>
+
+      
     </section>
 
     <!-- Keranjang -->
-    <section id="cart" style="display:none;">
+   <section id="cart" style="display:none;" data-aos="fade-up">
       <h2>Keranjang Kamu</h2>
       <div id="cartItems"></div>
       <button onclick="checkout()">Checkout</button>
     </section>
 
     <!-- Riwayat Pesanan -->
-    <section id="history" style="display:none;">
+    <section id="history" style="display:none;" data-aos="fade-up">
       <h2>Order History</h2>
       <div id="historyItems"></div>
     </section>
 
     <!-- Semua Rating Produk (sekarang menampilkan statistik global) -->
-    <section id="all-ratings" style="display:none;">
+    <section id="all-ratings" style="display:none;" data-aos="fade-up">
       <h2>Semua Rating Produk</h2>
 
       <div class="rating-summary">
