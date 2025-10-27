@@ -65,6 +65,13 @@
       <!-- Tambahkan di dalam section id="products" -->
 <h2>🔥 Produk Terlaris</h2>
 <div id="popularProductsContainer" class="products-grid"></div>
+
+      <select id="sortSelect" onchange="sortProducts()">
+  <option value="name">Nama A-Z</option>
+  <option value="price-low">Harga Rendah ke Tinggi</option>
+  <option value="price-high">Harga Tinggi ke Rendah</option>
+</select>
+<div id="productsContainer" class="products-masonry"></div>
     </section>
 
     <!-- Keranjang -->
