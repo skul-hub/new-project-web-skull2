@@ -412,16 +412,26 @@ form button[type="submit"]:hover {
   margin-bottom: 1rem;
 }
 
-.product button {
-  background: #238636;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.6rem 1rem;
-  margin: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: 0.3s;
+.product button, .admin-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.product button::before, .admin-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+.product button:active::before, .admin-button:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 .product button:hover {
@@ -525,15 +535,11 @@ form button[type="submit"]:hover {
 }
 
 .modal-content {
-  background-color: #161b22;
-  margin: auto;
-  padding: 2rem;
-  border: 1px solid #30363d;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  text-align: center;
-  box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+  animation: scaleIn 0.3s ease;
+}
+@keyframes scaleIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .modal-content h3 {
@@ -1283,11 +1289,12 @@ footer {
 }
 
 .promo-slide {
-  min-width: 100%;
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  padding: 0 1rem;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
 }
 
 @keyframes slide {
@@ -1307,7 +1314,8 @@ footer {
 .toast-notification {
   position: fixed;
   top: 20px;
-  right: 20px;
+  right: -300px;
+  
   background: #238636;
   color: white;
   padding: 1rem;
@@ -1316,12 +1324,13 @@ footer {
   z-index: 1000;
   opacity: 0;
   transform: translateY(-100%);
-  transition: opacity 0.5s, transform 0.5s;
+  transition: right 0.5s ease;
 }
 
 .toast-notification.show {
   opacity: 1;
   transform: translateY(0);
+  right: 20px;
 }
 
 .toast-notification.error {
@@ -1448,14 +1457,13 @@ header {
 
 /* Skeleton loader */
 .skeleton {
-  background: #30363d;
-  height: 200px;
+  background: linear-gradient(90deg, #30363d 25%, #161b22 50%, #30363d 75%);
+  background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 @keyframes shimmer {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Dark mode toggle */
@@ -1472,22 +1480,13 @@ header {
 }
 
 #sortSelect {
-  padding: 0.8rem;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  background: linear-gradient(145deg, #0d1117, #161b22);
-  color: #e6edf3;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(88, 166, 255, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 #sortSelect:hover {
-  border-color: #58a6ff;
+  transform: scale(1.05);
   box-shadow: 0 6px 15px rgba(88, 166, 255, 0.4);
-  transform: translateY(-2px);
 }
+
 #sortSelect:focus {
   outline: none;
   border-color: #58a6ff;
