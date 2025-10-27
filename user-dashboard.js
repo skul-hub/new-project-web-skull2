@@ -10,6 +10,7 @@ let previousStatuses = {}; // Simpan status sebelumnya
 
 async function checkUserAuth() {
   const { data: { user }, error } = await window.supabase.auth.getUser();
+  
 
   // Dapatkan elemen nav-links
   const navLinks = document.querySelector('.nav-links');
@@ -86,11 +87,16 @@ if (currentUser) {
     navLinks.querySelector('li:nth-child(5)').style.display = 'list-item'; // Logout
   }
 
+  const theme = localStorage.getItem('theme');
+if (theme === 'light') document.body.classList.add('light-mode');
+AOS.init();
+
   // Selalu tampilkan bagian produk dan muat produk
   showSection("products");
   loadAnnouncement(); // Panggil fungsi untuk memuat pengumuman
     loadPromoSlider(); // Tambahkan ini
    checkNewPromo(); // Tambahkan inidd
+  
 }
 
 async function loadProducts() {
