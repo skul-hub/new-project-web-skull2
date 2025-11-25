@@ -147,19 +147,12 @@
 </form>
     </section>
 
-<section id="manageScripts" style="display:none;">
-  <h2>Kelola Script</h2>
-
-  <form id="addScriptForm" onsubmit="addScript(event)">
-    <input type="text" id="scriptName" placeholder="Nama Script" required>
-    <input type="url" id="scriptLink" placeholder="Link Download (MediaFire/Drive) - harus url" required>
-    <input type="url" id="scriptImage" placeholder="URL Foto Script (opsional)">
-    <button type="submit" class="admin-button">Tambah Script</button>
-  </form>
-
-  <h3>Daftar Script</h3>
-  <div id="adminScriptList"></div>
-</section>
+<ul class="admin-nav">
+   <li><a onclick="showSection('products')">Kelola Produk</a></li>
+   <li><a onclick="showSection('orders')">Kelola Pesanan</a></li>
+   <li><a onclick="showSection('scripts')">Kelola Script</a></li>
+   <li><a onclick="showSection('settings')">Pengaturan</a></li>
+</ul>
   </main>
 
   <footer>
