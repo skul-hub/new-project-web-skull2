@@ -1,34 +1,25 @@
-// index.js
+// index.js - FIXED VERSION FOR YOUR INDEX.HTML
 
 document.addEventListener("DOMContentLoaded", () => {
-  const splashScreen = document.getElementById("splash-screen");
-  const startMenu = document.getElementById("start-menu");
-  const btnInfoScript = document.getElementById("btn-infoscript");
-  const btnStorePanel = document.getElementById("btn-storepanel");
+  const wrapper = document.getElementById("startWrapper");
+  const btnInfo = document.getElementById("btnInfoscript");
+  const btnPanel = document.getElementById("btnStorepanel");
 
-  const splashDuration = 2000; 
-  const fadeDuration = 800;
+  // Efek fade-in halus
+  wrapper.style.opacity = "0";
+  wrapper.style.transition = "opacity 1s ease";
 
-  // Tampilkan splash dulu
   setTimeout(() => {
-    splashScreen.classList.add("fade-out");
+    wrapper.style.opacity = "1";
+  }, 200);
 
-    setTimeout(() => {
-      splashScreen.style.display = "none";
-      startMenu.style.display = "flex";  // Tampilkan menu pilihan
-      startMenu.classList.add("fade-in");
-
-    }, fadeDuration);
-
-  }, splashDuration);
-
-  // === TOMBOL INFOSCRIPT ===
-  btnInfoScript.addEventListener("click", () => {
+  // === INFOSCRIPT ===
+  btnInfo.addEventListener("click", () => {
     window.location.href = "infoscript.html";
   });
 
-  // === TOMBOL STORE PANEL ===
-  btnStorePanel.addEventListener("click", () => {
+  // === STORE PANEL ===
+  btnPanel.addEventListener("click", () => {
     window.location.href = "user-dashboard.html";
   });
 });
