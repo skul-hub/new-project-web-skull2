@@ -603,4 +603,52 @@ async function logout() {
   window.location.href = "signin.html";
 }
 
+async function loadAdminScripts() {
+  const { data, error } = await window.supabase
+    .from("scripts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const div = document.getElementById("adminScriptList");
+  div.innerHTML = "";
+
+  if (error) {
+    div.innerHTML = "<p>Gagal memuat script.</p>";
+    return;
+  }
+
+  data.forEach(s => {
+    const box = document.createElement("div");
+    box.className = "admin-script";
+
+    box.innerHTML = `
+      <img src="${s.image_url}" class="small-img">
+      <p>${s.name}</p>
+      <button onclick="deleteScript('${s.id}')">Hapus</button>
+    `;
+
+    div.appendChild(box);
+  });
+}
+
+async function addScript() {
+  const name = document.getElementById("scriptName").value;
+  const link = document.getElementById("scriptLink").value;
+  const image = document.getElementById("scriptImage").value;
+
+  const { error } = await window.supabase
+    .from("scripts")
+    .insert([{ name, download_link: link, image_url: image }]);
+
+  if (error) return alert("Gagal menambah script");
+
+  alert("Script berhasil ditambahkan!");
+  loadAdminScripts();
+}
+
+async function deleteScript(id) {
+  await window.supabase.from("scripts").delete().eq("id", id);
+  loadAdminScripts();
+}
+
 window.onload = checkAdminAuth;
