@@ -1,3 +1,4 @@
+// infoscript.js
 document.addEventListener("DOMContentLoaded", loadScripts);
 
 async function loadScripts() {
@@ -10,7 +11,8 @@ async function loadScripts() {
   container.innerHTML = "";
 
   if (error) {
-    container.innerHTML = "<p>Gagal memuat data.</p>";
+    container.innerHTML = "<p>Gagal memuat data script.</p>";
+    console.error(error);
     return;
   }
 
@@ -20,15 +22,18 @@ async function loadScripts() {
   }
 
   data.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "script-card";
+    const card = document.createElement("div");
+    card.className = "script-card";
+    card.setAttribute("data-aos", "fade-up");
 
-    div.innerHTML = `
-      <img src="${s.image_url}" alt="${s.name}" class="script-image">
-      <h3>${s.name}</h3>
-      <button onclick="window.location.href='${s.download_link}'">Download Script</button>
+    card.innerHTML = `
+      <img src="${s.image_url || 'img/placeholder.png'}" alt="${s.name}" class="script-image" />
+      <h3 class="script-name">${s.name}</h3>
+      <div class="script-actions">
+        <a href="${s.download_link}" target="_blank" class="primary-btn">Download</a>
+      </div>
     `;
 
-    container.appendChild(div);
+    container.appendChild(card);
   });
 }
