@@ -1494,34 +1494,66 @@ header {
   box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
 }
 
+/* Start Menu */
 .start-menu {
-  text-align: center;
-  margin-top: 100px;
-}
-
-.start-menu button {
-  margin: 10px;
-  padding: 15px 25px;
-  font-size: 18px;
-  border-radius: 10px;
-}
-
-.script-container {
-  display: grid;
-  gap: 20px;
-  padding: 20px;
-}
-
-.script-card {
-  padding: 15px;
-  background: #111;
-  border-radius: 10px;
-  text-align: center;
-}
-
-.script-image {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,10,10,0.8);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+
+.start-menu.fade-in {
+  opacity: 1;
+}
+
+.start-box {
+  background: #111;
+  padding: 35px;
+  border-radius: 16px;
+  text-align: center;
+  width: 80%;
+  max-width: 350px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.45);
+  animation: pop .5s ease;
+}
+
+.start-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.start-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
   border-radius: 10px;
+  border: none;
+  background: #238636;
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.start-btn:hover {
+  background: #2ea043;
+  transform: scale(1.03);
+}
+
+@keyframes pop {
+  from { transform: scale(.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* Responsif */
