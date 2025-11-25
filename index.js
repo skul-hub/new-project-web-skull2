@@ -2,16 +2,33 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const splashScreen = document.getElementById("splash-screen");
-  const splashDuration = 2000; // Durasi splash screen dalam milidetik (2 detik)
-  const fadeOutDuration = 1000; // Durasi efek fade-out dalam milidetik (1 detik)
+  const startMenu = document.getElementById("start-menu");
+  const btnInfoScript = document.getElementById("btn-infoscript");
+  const btnStorePanel = document.getElementById("btn-storepanel");
 
+  const splashDuration = 2000; 
+  const fadeDuration = 800;
+
+  // Tampilkan splash dulu
   setTimeout(() => {
-    // Tambahkan kelas fade-out untuk memulai transisi
     splashScreen.classList.add("fade-out");
 
-    // Setelah transisi fade-out selesai, redirect ke halaman user-dashboard.html
     setTimeout(() => {
-      window.location.href = "user-dashboard.html";
-    }, fadeOutDuration); // Tunggu sampai fade-out selesai
-  }, splashDuration); // Tampilkan splash screen selama splashDuration sebelum fade-out
+      splashScreen.style.display = "none";
+      startMenu.style.display = "flex";  // Tampilkan menu pilihan
+      startMenu.classList.add("fade-in");
+
+    }, fadeDuration);
+
+  }, splashDuration);
+
+  // === TOMBOL INFOSCRIPT ===
+  btnInfoScript.addEventListener("click", () => {
+    window.location.href = "infoscript.html";
+  });
+
+  // === TOMBOL STORE PANEL ===
+  btnStorePanel.addEventListener("click", () => {
+    window.location.href = "user-dashboard.html";
+  });
 });
