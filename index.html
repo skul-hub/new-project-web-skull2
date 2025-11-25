@@ -1,28 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <link rel="icon" href="img/logo.jpeg" type="image/jpeg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>STORESKULL</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js" defer></script>
+  <script src="index.start.js" defer></script> <!-- file baru yang menangani tombol -->
 </head>
 <body>
-  
+  <div id="startWrapper" class="start-wrapper" data-aos="fade-up">
+    <img src="img/logo.jpeg" alt="logo" class="start-logo" />
+    <h1 class="start-title">SELAMAT DATANG DI STORESKULL</h1>
 
-  
+    <p class="start-sub">Pilih salah satu untuk melanjutkan</p>
 
-  <div class="start-menu">
-  <h1>SELAMAT DATANG DI SKULL HOSTING</h1>
-  <button onclick="location.href='infoscript.html'">INFOSCRIPT</button>
-  <button onclick="location.href='user-dashboard.html'">STORE PANEL</button>
+    <div class="start-buttons">
+      <button id="btnInfoscript" class="primary-btn">INFOSCRIPT</button>
+      <button id="btnStorepanel" class="secondary-btn">STORE PANEL</button>
+    </div>
   </div>
 
   <footer>
     <p>&copy; 2025 STORESKULL</p>
   </footer>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script> AOS.init(); </script>
 </body>
 </html>
