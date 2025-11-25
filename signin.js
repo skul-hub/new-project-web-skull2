@@ -34,6 +34,10 @@ async function signin(event) {
     console.warn("Tidak bisa mengambil role user:", err);
   }
 
-  // Redirect ke halaman pilihan (index)
-  window.location.href = "index.html";
+  if (data.user.user_metadata.role === "admin") {
+    window.location.href = "admin-dashboard.html";
+} else {
+    window.location.href = "index.html";
+  }
+
 }
