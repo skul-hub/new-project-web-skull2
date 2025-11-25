@@ -604,75 +604,55 @@ async function logout() {
 }
 
 // di admin-dashboard.js (tambahkan fungsi ini)
-async function loadAdminScripts() {
-  const { data, error } = await window.supabase
-    .from("scripts")
-    .select("*")
-    .order("created_at", { ascending: false });
+async function loadScripts() {
+  const { data, error } = await window.supabase.from("scripts").select("*");
+  const list = document.getElementById("scriptList");
+  list.innerHTML = "";
 
-  const container = document.getElementById("adminScriptList");
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (error) {
-    container.innerHTML = "<p>Gagal memuat script.</p>";
-    console.error(error);
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    container.innerHTML = "<p>Belum ada script.</p>";
-    return;
+  if (data.length === 0) {
+     list.innerHTML = "<p>Belum ada script.</p>";
+     return;
   }
 
   data.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "admin-script";
-    div.innerHTML = `
-      <img src="${s.image_url || 'img/placeholder.png'}" class="small-img" />
-      <div class="admin-script-info">
-        <p><strong>${s.name}</strong></p>
-        <a href="${s.download_link}" target="_blank">Preview</a>
-      </div>
-      <div class="admin-script-actions">
-        <button onclick="deleteScript('${s.id}')" class="admin-button delete">Hapus</button>
+    list.innerHTML += `
+      <div class="script-item">
+        <img src="${s.image}" />
+        <h3>${s.name}</h3>
+        <a href="${s.link}" target="_blank">Lihat Script</a>
       </div>
     `;
-    container.appendChild(div);
   });
 }
 
-async function addScript(event) {
-  event.preventDefault();
-  const name = document.getElementById("scriptName").value.trim();
-  const link = document.getElementById("scriptLink").value.trim();
-  const image = document.getElementById("scriptImage").value.trim();
+async function addScript(e) {
+  e.preventDefault();
 
-  if (!name || !link) return alert("Lengkapi nama dan link script.");
+  const name = document.getElementById("scriptName").value;
+  const link = document.getElementById("scriptLink").value;
+  const file = document.getElementById("scriptImage").files[0];
 
-  const { error } = await window.supabase
-    .from("scripts")
-    .insert([{ name, download_link: link, image_url: image }]);
+  const fileName = Date.now() + "_" + file.name;
+  const path = "scripts/" + fileName;
 
-  if (error) {
-    alert("Gagal menambah script: " + error.message);
-    console.error(error);
+  const { error: uploadErr } = await window.supabase.storage.from("script_images").upload(path, file);
+  if (uploadErr) {
+    alert("Gagal upload gambar.");
     return;
   }
 
-  alert("Script berhasil ditambahkan!");
-  document.getElementById("addScriptForm").reset();
-  loadAdminScripts();
-}
+  const { data: imgURL } = window.supabase.storage.from("script_images").getPublicUrl(path);
 
-async function deleteScript(id) {
-  if (!confirm("Yakin hapus script ini?")) return;
-  const { error } = await window.supabase.from("scripts").delete().eq("id", id);
+  const { error } = await window.supabase.from("scripts").insert([
+    { name, link, image: imgURL.publicUrl }
+  ]);
+
   if (error) {
-    alert("Gagal menghapus script: " + error.message);
+    alert("Gagal menambah script.");
     return;
   }
-  loadAdminScripts();
-}
 
+  alert("Berhasil menambah script!");
+  loadScripts();
+}
 window.onload = checkAdminAuth;
