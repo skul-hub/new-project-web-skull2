@@ -147,17 +147,19 @@
 </form>
     </section>
 
-    <section id="manageScripts">
+<section id="manageScripts" style="display:none;">
   <h2>Kelola Script</h2>
 
-  <input type="text" id="scriptName" placeholder="Nama Script">
-  <input type="text" id="scriptLink" placeholder="Link Download Script">
-  <input type="text" id="scriptImage" placeholder="URL Foto Script">
+  <form id="addScriptForm" onsubmit="addScript(event)">
+    <input type="text" id="scriptName" placeholder="Nama Script" required>
+    <input type="url" id="scriptLink" placeholder="Link Download (MediaFire/Drive) - harus url" required>
+    <input type="url" id="scriptImage" placeholder="URL Foto Script (opsional)">
+    <button type="submit" class="admin-button">Tambah Script</button>
+  </form>
 
-  <button onclick="addScript()">Tambah Script</button>
-
+  <h3>Daftar Script</h3>
   <div id="adminScriptList"></div>
-    </section>
+</section>
   </main>
 
   <footer>
