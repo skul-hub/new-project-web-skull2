@@ -40,13 +40,12 @@
 </head>
 <body>
   <header>
-    <nav>
-      <button onclick="showSection('products')">Produk</button>
-      <button onclick="showSection('orders')">Pesanan</button>
-      <button onclick="showSection('ratings')">Rating & Komentar</button> <!-- Tombol baru di navbar -->
-      <button onclick="showSection('settings')">Pengaturan</button>
-      <button onclick="logout()">Logout</button>
-    </nav>
+    <ul class="admin-nav">
+   <li><a onclick="showSection('products')">Kelola Produk</a></li>
+   <li><a onclick="showSection('orders')">Kelola Pesanan</a></li>
+   <li><a onclick="showSection('scripts')">Kelola Script</a></li>
+   <li><a onclick="showSection('settings')">Pengaturan</a></li>
+    </ul>
   </header>
 
   <main>
