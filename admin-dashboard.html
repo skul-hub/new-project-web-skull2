@@ -147,12 +147,17 @@
 </form>
     </section>
 
-<ul class="admin-nav">
-   <li><a onclick="showSection('products')">Kelola Produk</a></li>
-   <li><a onclick="showSection('orders')">Kelola Pesanan</a></li>
-   <li><a onclick="showSection('scripts')">Kelola Script</a></li>
-   <li><a onclick="showSection('settings')">Pengaturan</a></li>
-</ul>
+<section id="manageScripts">
+  <h2>Kelola Script</h2>
+
+  <input type="text" id="scriptName" placeholder="Nama Script">
+  <input type="text" id="scriptLink" placeholder="Link Download Script">
+  <input type="text" id="scriptImage" placeholder="URL Foto Script">
+
+  <button onclick="addScript()">Tambah Script</button>
+
+  <div id="adminScriptList"></div>
+</section>
   </main>
 
   <footer>
