@@ -603,51 +603,75 @@ async function logout() {
   window.location.href = "signin.html";
 }
 
+// di admin-dashboard.js (tambahkan fungsi ini)
 async function loadAdminScripts() {
   const { data, error } = await window.supabase
     .from("scripts")
     .select("*")
     .order("created_at", { ascending: false });
 
-  const div = document.getElementById("adminScriptList");
-  div.innerHTML = "";
+  const container = document.getElementById("adminScriptList");
+  if (!container) return;
+  container.innerHTML = "";
 
   if (error) {
-    div.innerHTML = "<p>Gagal memuat script.</p>";
+    container.innerHTML = "<p>Gagal memuat script.</p>";
+    console.error(error);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>Belum ada script.</p>";
     return;
   }
 
   data.forEach(s => {
-    const box = document.createElement("div");
-    box.className = "admin-script";
-
-    box.innerHTML = `
-      <img src="${s.image_url}" class="small-img">
-      <p>${s.name}</p>
-      <button onclick="deleteScript('${s.id}')">Hapus</button>
+    const div = document.createElement("div");
+    div.className = "admin-script";
+    div.innerHTML = `
+      <img src="${s.image_url || 'img/placeholder.png'}" class="small-img" />
+      <div class="admin-script-info">
+        <p><strong>${s.name}</strong></p>
+        <a href="${s.download_link}" target="_blank">Preview</a>
+      </div>
+      <div class="admin-script-actions">
+        <button onclick="deleteScript('${s.id}')" class="admin-button delete">Hapus</button>
+      </div>
     `;
-
-    div.appendChild(box);
+    container.appendChild(div);
   });
 }
 
-async function addScript() {
-  const name = document.getElementById("scriptName").value;
-  const link = document.getElementById("scriptLink").value;
-  const image = document.getElementById("scriptImage").value;
+async function addScript(event) {
+  event.preventDefault();
+  const name = document.getElementById("scriptName").value.trim();
+  const link = document.getElementById("scriptLink").value.trim();
+  const image = document.getElementById("scriptImage").value.trim();
+
+  if (!name || !link) return alert("Lengkapi nama dan link script.");
 
   const { error } = await window.supabase
     .from("scripts")
     .insert([{ name, download_link: link, image_url: image }]);
 
-  if (error) return alert("Gagal menambah script");
+  if (error) {
+    alert("Gagal menambah script: " + error.message);
+    console.error(error);
+    return;
+  }
 
   alert("Script berhasil ditambahkan!");
+  document.getElementById("addScriptForm").reset();
   loadAdminScripts();
 }
 
 async function deleteScript(id) {
-  await window.supabase.from("scripts").delete().eq("id", id);
+  if (!confirm("Yakin hapus script ini?")) return;
+  const { error } = await window.supabase.from("scripts").delete().eq("id", id);
+  if (error) {
+    alert("Gagal menghapus script: " + error.message);
+    return;
+  }
   loadAdminScripts();
 }
 
