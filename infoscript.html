@@ -1,15 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Info Script - SkullHosting</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <link rel="icon" href="img/logo.jpeg" type="image/jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Info Script - STORESKULL</title>
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="infoscript.js" defer></script>
 </head>
 <body>
-  <h2 class="page-title">Info Script</h2>
-  <div id="scriptList" class="script-container"></div>
+  <header>
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <img src="img/logo.jpeg" class="store-logo" />
+        <h1><a href="index.html">STORESKULL</a></h1>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="user-dashboard.html">Store Panel</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <h2>Info Script</h2>
+      <div id="scriptList" class="script-container"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 STORESKULL</p>
+  </footer>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script> AOS.init(); </script>
 </body>
 </html>
