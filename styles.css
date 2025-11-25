@@ -1494,6 +1494,36 @@ header {
   box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
 }
 
+.start-menu {
+  text-align: center;
+  margin-top: 100px;
+}
+
+.start-menu button {
+  margin: 10px;
+  padding: 15px 25px;
+  font-size: 18px;
+  border-radius: 10px;
+}
+
+.script-container {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+}
+
+.script-card {
+  padding: 15px;
+  background: #111;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.script-image {
+  width: 100%;
+  border-radius: 10px;
+}
+
 /* Responsif */
 @media (max-width: 768px) {
   .toast-notification {
