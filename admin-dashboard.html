@@ -2,143 +2,135 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="img/logo.jpeg" type="image/jpeg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ADMIN - STORESKULL</title>
+  <title>Admin Dashboard - StoreSkull</title>
+  <link rel="icon" href="img/logo.jpeg">
   <link rel="stylesheet" href="styles.css">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
 </head>
 
 <body>
 
-  <!-- NAVBAR -->
-  <header>
-    <nav>
-      <div class="logo">ADMIN - STORESKULL</div>
-      <ul class="nav-links">
-        <li><a onclick="showSection('productsSection')">Kelola Produk</a></li>
-        <li><a onclick="showSection('ordersSection')">Kelola Pesanan</a></li>
-        <li><a onclick="showSection('settingsSection')">Pengaturan</a></li>
-        <li><a onclick="showSection('scriptsSection')">Kelola Script</a></li>
-        <li><a onclick="logout()" class="logout-btn">Logout</a></li>
-      </ul>
-    </nav>
-  </header>
+<!-- ========================================= -->
+<!-- NAVBAR ADMIN -->
+<!-- ========================================= -->
+<header class="navbar">
+  <h2>Admin Panel</h2>
+  <div class="nav-right">
+    <span id="adminName" class="admin-tag">Admin</span>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+  </div>
+</header>
 
+<!-- ========================================= -->
+<!-- MENU NAVIGASI ADMIN -->
+<!-- ========================================= -->
+<nav class="admin-menu">
+  <button onclick="showSection('productsSection')">Kelola Produk</button>
+  <button onclick="showSection('ordersSection')">Kelola Pesanan</button>
+  <button onclick="showSection('scriptsSection')">Kelola Script</button>
+  <button onclick="showSection('settingsSection')">Pengaturan</button>
+</nav>
 
-  <main>
+<!-- ========================================= -->
+<!-- SECTION: PRODUK -->
+<!-- ========================================= -->
+<section id="productsSection">
+  <h2>Kelola Produk</h2>
 
-    <!-- ============================= -->
-    <!-- 📦 SECTION: KELOLA PRODUK -->
-    <!-- ============================= -->
-    <section id="productsSection" class="admin-section">
-      <h2>Kelola Produk</h2>
+  <div class="form-box">
+    <h3>Tambah Produk</h3>
 
-      <button class="admin-button" onclick="document.getElementById('addProductModal').style.display='flex'">
-        + Tambah Produk
-      </button>
+    <input type="text" id="prodName" placeholder="Nama Produk">
+    <input type="number" id="prodPrice" placeholder="Harga">
+    <select id="prodCategory">
+      <option value="panel_pterodactyl">Panel Pterodactyl</option>
+      <option value="game_account">Akun Game</option>
+    </select>
+    <input type="number" id="prodStock" placeholder="Stock">
+    <input type="text" id="prodImage" placeholder="Link Gambar">
 
-      <div id="adminProductsList" class="admin-list"></div>
-    </section>
-
-
-    <!-- ============================= -->
-    <!-- 📦 SECTION: KELOLA PESANAN -->
-    <!-- ============================= -->
-    <section id="ordersSection" class="admin-section" style="display:none;">
-      <h2>Kelola Pesanan</h2>
-      <div id="adminOrdersList" class="admin-list"></div>
-    </section>
-
-
-    <!-- ============================= -->
-    <!-- ⚙️ SECTION: PENGATURAN ADMIN -->
-    <!-- ============================= -->
-    <section id="settingsSection" class="admin-section" style="display:none;">
-      <h2>Pengaturan Admin</h2>
-
-      <div class="setting-box">
-        <h3>Pengumuman</h3>
-        <textarea id="announcementInput" placeholder="Tulis pengumuman..."></textarea>
-        <button onclick="saveAnnouncement()" class="admin-button">Simpan</button>
-      </div>
-
-      <div class="setting-box">
-        <h3>QRIS</h3>
-        <input type="file" id="qrisInput">
-        <button onclick="uploadQris()" class="admin-button">Upload QRIS</button>
-      </div>
-
-      <div class="setting-box">
-        <h3>Nomor Rekening / E-Wallet</h3>
-        <input id="danaNumber" placeholder="Nomor DANA">
-        <input id="ovoNumber" placeholder="Nomor OVO">
-        <input id="gopayNumber" placeholder="Nomor GOPAY">
-        <button onclick="savePaymentNumbers()" class="admin-button">Simpan Nomor</button>
-      </div>
-    </section>
-
-
-    <!-- ============================= -->
-    <!-- 📜 SECTION: KELOLA SCRIPT -->
-    <!-- ============================= -->
-    <section id="scriptsSection" class="admin-section" style="display:none;">
-      <h2>Kelola InfoScript</h2>
-
-      <button class="admin-button" onclick="document.getElementById('addScriptModal').style.display='flex'">
-        + Tambah Script
-      </button>
-
-      <div id="scriptList" class="admin-list"></div>
-    </section>
-
-
-  </main>
-
-  <!-- ============================= -->
-  <!-- MODAL: TAMBAH SCRIPT -->
-  <!-- ============================= -->
-  <div id="addScriptModal" class="modal">
-    <div class="modal-content">
-      <h3>Tambah Script Baru</h3>
-
-      <label>Nama Script</label>
-      <input type="text" id="scriptNameInput">
-
-      <label>Link Script</label>
-      <input type="text" id="scriptLinkInput">
-
-      <label>Gambar Script</label>
-      <input type="file" id="scriptImageInput">
-
-      <button class="admin-button" onclick="addScript()">Upload</button>
-      <button class="admin-button danger" onclick="document.getElementById('addScriptModal').style.display='none'">Tutup</button>
-    </div>
+    <button onclick="addProduct()">Tambah Produk</button>
   </div>
 
+  <h3>Daftar Produk</h3>
+  <div id="productsList" class="flex-list"></div>
+</section>
 
-  <!-- ============================= -->
-  <!-- MODAL: TAMBAH PRODUK -->
-  <!-- ============================= -->
-  <div id="addProductModal" class="modal">
-    <div class="modal-content">
-      <h3>Tambah Produk</h3>
+<!-- ========================================= -->
+<!-- MODAL EDIT PRODUK -->
+<!-- ========================================= -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3>Edit Produk</h3>
 
-      <input id="productNameInput" placeholder="Nama Produk">
-      <input id="productPriceInput" type="number" placeholder="Harga">
-      <input id="productCategoryInput" placeholder="Kategori (panel_pterodactyl / game_account)">
-      <input id="productStockInput" type="number" placeholder="Stok (untuk kategori game_account)">
-      <input type="file" id="productImageInput">
+    <input type="hidden" id="editProdId">
 
-      <button onclick="addProduct()" class="admin-button">Upload Produk</button>
-      <button class="admin-button danger" onclick="document.getElementById('addProductModal').style.display='none'">Tutup</button>
-    </div>
+    <input type="text" id="editProdName" placeholder="Nama Produk">
+    <input type="number" id="editProdPrice" placeholder="Harga">
+    <select id="editProdCategory">
+      <option value="panel_pterodactyl">Panel Pterodactyl</option>
+      <option value="game_account">Akun Game</option>
+    </select>
+    <input type="number" id="editProdStock" placeholder="Stock">
+    <input type="text" id="editProdImage" placeholder="Link Gambar">
+
+    <button onclick="saveEditProduct()">Simpan</button>
+    <button onclick="document.getElementById('editModal').style.display='none'" class="danger">Tutup</button>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!-- SECTION: ORDERS -->
+<!-- ========================================= -->
+<section id="ordersSection" style="display:none;">
+  <h2>Kelola Pesanan</h2>
+  <div id="ordersList" class="flex-list"></div>
+</section>
+
+<!-- ========================================= -->
+<!-- SECTION: SCRIPTS -->
+<!-- ========================================= -->
+<section id="scriptsSection" style="display:none;">
+  <h2>Kelola Script</h2>
+
+  <div class="form-box">
+    <h3>Tambah Script</h3>
+
+    <input type="text" id="scriptName" placeholder="Nama Script">
+    <input type="text" id="scriptImg" placeholder="Link Gambar Script">
+    <input type="text" id="scriptLink" placeholder="Link Download (Mediafire)">
+    <button onclick="addScript()">Tambah Script</button>
   </div>
 
+  <h3>Daftar Script</h3>
+  <div id="scriptsList" class="flex-list"></div>
+</section>
 
-  <script src="admin-dashboard.js"></script>
+<!-- ========================================= -->
+<!-- SECTION: SETTINGS -->
+<!-- ========================================= -->
+<section id="settingsSection" style="display:none;">
+  <h2>Pengaturan</h2>
+
+  <div class="form-box">
+    <label>Pengumuman</label>
+    <textarea id="setAnnouncement"></textarea>
+
+    <label>Nomor Dana</label>
+    <input type="text" id="setDana">
+
+    <label>Nomor GoPay</label>
+    <input type="text" id="setGopay">
+
+    <label>Link Gambar QRIS</label>
+    <input type="text" id="setQris">
+
+    <button onclick="saveSettings()">Simpan Pengaturan</button>
+  </div>
+</section>
+
+<script src="admin-dashboard.js"></script>
 
 </body>
 </html>
