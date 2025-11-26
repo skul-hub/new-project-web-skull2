@@ -1,291 +1,345 @@
-// admin-dashboard.js
+// =========================
+// ADMIN DASHBOARD FULL JS
+// =========================
+
 let currentAdmin = null;
 
+// CEK LOGIN ADMIN
 async function checkAdminAuth() {
-  const { data: { user }, error } = await window.supabase.auth.getUser();
-  if (error || !user) {
+  const { data: { user } } = await window.supabase.auth.getUser();
+
+  if (!user) {
     window.location.href = "signin.html";
     return;
   }
 
-  const { data: userData } = await window.supabase.from("users").select("*").eq("id", user.id).single();
-  if (!userData || userData.role !== "admin") {
-    alert("Akses ditolak.");
-    window.location.href = "signin.html";
+  const { data, error } = await window.supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!data || data.role !== "admin") {
+    window.location.href = "user-dashboard.html";
     return;
   }
 
-  currentAdmin = userData;
-  showSection("products");
+  currentAdmin = user;
+  loadAllAdminData();
 }
 
-function showSection(section) {
-  document.getElementById("products").style.display = "none";
-  document.getElementById("orders").style.display = "none";
-  document.getElementById("settings").style.display = "none";
-  document.getElementById("ratings").style.display = "none"; // Tambahkan ini
-  document.getElementById(section).style.display = "block";
-
-  if (section === "products") loadProducts();
-  if (section === "orders") loadOrders();
-  if (section === "settings") loadQrisSettings();
-  if (section === "ratings") loadRatings(); // Panggil fungsi baru
+// =============================
+// LOAD SEMUA DATA ADMIN
+// =============================
+function loadAllAdminData() {
+  loadProductsAdmin();
+  loadOrdersAdmin();
+  loadSettings();
+  loadScripts();
 }
 
-async function loadProducts() {
-  const { data, error } = await window.supabase.from("products").select("*");
-  if (error) return console.error(error);
+// =============================
+// NAVIGASI ADMIN
+// =============================
+function showSection(id) {
+  document.querySelectorAll(".admin-section").forEach(sec => sec.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
 
-  const container = document.getElementById("productsList");
+
+// ==================================================================
+// ======================  KELOLA SCRIPT  ============================
+// ==================================================================
+
+async function addScript() {
+  const name = document.getElementById("scriptName").value.trim();
+  const link = document.getElementById("scriptLink").value.trim();
+  const file = document.getElementById("scriptImage").files[0];
+
+  if (!name || !link || !file) {
+    alert("Isi nama, link dan gambar script!");
+    return;
+  }
+
+  // Upload gambar
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const path = `script/${fileName}`;
+
+  const { error: uploadErr } = await window.supabase
+    .storage
+    .from("script_images")
+    .upload(path, file);
+
+  if (uploadErr) {
+    alert("Gagal upload gambar!");
+    console.error(uploadErr);
+    return;
+  }
+
+  const { data: urlData } = window.supabase
+    .storage
+    .from("script_images")
+    .getPublicUrl(path);
+
+  // Insert database
+  const { error: insertErr } = await window.supabase
+    .from("scripts")
+    .insert([
+      { name, link, image_url: urlData.publicUrl, image_path: path }
+    ]);
+
+  if (insertErr) {
+    alert("Gagal menambah script!");
+    console.error(insertErr);
+  } else {
+    alert("Script berhasil ditambahkan!");
+    loadScripts();
+  }
+}
+
+async function loadScripts() {
+  const { data } = await window.supabase.from("scripts").select("*");
+
+  const container = document.getElementById("scriptList");
   container.innerHTML = "";
 
-  if (data && data.length > 0) {
-    data.forEach((p) => {
-      const safeName = p.name.replace(/'/g, "\\'");
-      let stockInfo = '';
-      let stockButtons = '';
-      if (p.category === 'game_account') {
-        stockInfo = ` | Stok: <strong>${p.stock}</strong>`;
-        stockButtons = `
-          <button onclick="updateProductStock('${p.id}', ${p.stock - 1})" class="admin-button">-</button>
-          <button onclick="updateProductStock('${p.id}', ${p.stock + 1})" class="admin-button">+</button>
-        `;
-      }
-
-      const div = document.createElement("div");
-      div.innerHTML = `
-        <p><strong>${p.name}</strong> - Rp ${p.price.toLocaleString()} (${p.category === 'panel_pterodactyl' ? 'Panel Pterodactyl' : 'Akun Game'})${stockInfo}</p>
-        <div class="product-actions">
-          ${stockButtons}
-          <button onclick="deleteProduct('${p.id}')" class="admin-button delete">🗑️ Hapus</button>
-          <button onclick="toggleProduct('${p.id}', ${p.active ? "false" : "true"})" class="admin-button">
-            ${p.active ? "Nonaktifkan" : "Aktifkan"}
-          </button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-  } else {
-    container.innerHTML = "<p>Tidak ada produk.</p>";
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>Belum ada script.</p>";
+    return;
   }
+
+  data.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "admin-card";
+
+    div.innerHTML = `
+      <img src="${s.image_url}" class="admin-img">
+      <h4>${s.name}</h4>
+      <p><a href="${s.link}" target="_blank">Lihat Link</a></p>
+      <button class="admin-button danger" onclick="deleteScript(${s.id}, '${s.image_path}')">Hapus</button>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
-async function addProduct(event) {
-  event.preventDefault();
-  const name = document.getElementById("productName").value;
-  const price = parseInt(document.getElementById("productPrice").value, 10);
-  const category = document.getElementById("productCategory").value;
-  const stock = parseInt(document.getElementById("productStock").value, 10);
-  const file = document.getElementById("productImage").files[0];
+async function deleteScript(id, imagePath) {
+  if (!confirm("Yakin hapus script ini?")) return;
 
-  if (!name || !price || !category || !file) {
-    alert("Lengkapi semua field!");
-    return;
-  }
-    if (category === 'game_account' && (isNaN(stock) || stock < 0)) {
-    alert("Stok harus angka non-negatif untuk Akun Game.");
-    return;
-  }
+  // Hapus file storage
+  await window.supabase.storage
+    .from("script_images")
+    .remove([imagePath]);
 
-  if (file.size > 2 * 1024 * 1024) {
-    alert("Ukuran gambar terlalu besar. Maksimal 2MB.");
-    return;
-  }
+  // Hapus database
+  await window.supabase
+    .from("scripts")
+    .delete()
+    .eq("id", id);
 
-  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-  const { error: upErr } = await window.supabase.storage.from("product-images").upload(fileName, file);
-  if (upErr) {
-    alert("Upload gagal: " + upErr.message);
-    return;
-  }
+  alert("Script dihapus.");
+  loadScripts();
+}
 
-  const { data: urlData } = window.supabase.storage.from("product-images").getPublicUrl(fileName);
 
-  const { error } = await window.supabase.from("products").insert([
-    { name, price, image: urlData.publicUrl, active: true, category, stock: category === 'game_account' ? stock : null },
-  ]);
-  if (error) {
-    alert("Gagal tambah produk: " + error.message);
-    return;
-  }
 
-  alert("Produk berhasil ditambahkan!");
-  document.getElementById("addProductForm").reset();
-  document.getElementById("productImage").value = "";
-  loadProducts();
+// ==================================================================
+// ======================  PRODUK ADMIN  =============================
+// ==================================================================
+
+async function loadProductsAdmin() {
+  const container = document.getElementById("adminProductsList");
+  container.innerHTML = "<p>Loading...</p>";
+
+  const { data, error } = await window.supabase.from("products").select("*");
+
+  if (error) return container.innerHTML = "<p>Gagal memuat produk.</p>";
+
+  container.innerHTML = "";
+  data.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "admin-card";
+
+    div.innerHTML = `
+      <img src="${p.image}" class="admin-img">
+
+      <h4>${p.name}</h4>
+      <p>Rp ${p.price.toLocaleString()}</p>
+
+      <button class="admin-button danger" onclick="deleteProduct('${p.id}')">Hapus</button>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
 async function deleteProduct(id) {
-  if (!confirm("Yakin ingin menghapus produk ini?")) return;
-  const { error } = await window.supabase.from("products").delete().eq("id", id);
-  if (error) {
-    alert("Gagal menghapus produk: " + error.message);
-    return;
-  }
-  alert("Produk berhasil dihapus.");
-  loadProducts();
+  if (!confirm("Hapus produk?")) return;
+
+  await window.supabase.from("products").delete().eq("id", id);
+
+  alert("Produk dihapus.");
+  loadProductsAdmin();
 }
 
-async function toggleProduct(id, newStatus) {
-  const { error } = await window.supabase
-    .from("products")
-    .update({ active: newStatus })
-    .eq("id", id);
 
-  if (error) {
-    alert("Gagal mengubah status produk: " + error.message);
-    return;
-  }
 
-  alert(`Produk berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}.`);
-  loadProducts();
-}
+// ==================================================================
+// ======================  PESANAN ADMIN  ============================
+// ==================================================================
 
-async function updateProductStock(id, newStock) {
-  if (newStock < 0) {
-    alert("Stok tidak bisa kurang dari 0.");
-    return;
-  }
-  const { error } = await window.supabase
-    .from("products")
-    .update({ stock: newStock })
-    .eq("id", id);
+async function loadOrdersAdmin() {
+  const container = document.getElementById("adminOrdersList");
+  container.innerHTML = "<p>Loading...</p>";
 
-  if (error) {
-    alert("Gagal mengubah stok produk: " + error.message);
-    return;
-  }
-
-  alert("Stok produk berhasil diupdate.");
-  loadProducts();
-}
-
-async function loadOrders() {
   const { data, error } = await window.supabase
     .from("orders_view")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) return console.error(error);
+  if (error) return container.innerHTML = "<p>Gagal memuat pesanan.</p>";
 
-  const container = document.getElementById("ordersList");
   container.innerHTML = "";
+  data.forEach(o => {
+    const div = document.createElement("div");
+    div.className = "admin-card";
 
-  if (data && data.length > 0) {
-    data.forEach((o) => {
-      const div = document.createElement("div");
-      div.className = "order";
-      div.innerHTML = `
-        <p>Order ID: ${o.id}</p>
-        <p>User: ${o.username}</p>
-        <p>Produk: ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
-        <p>Status Saat Ini: ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
-        <p>Bukti TF: ${
-          o.payment_proof ? `<a href="${o.payment_proof}" target="_blank">Lihat</a>` : "-"
-        }</p>
-        <select id="status-${o.id}">
-          <option value="">--Pilih Status Baru--</option>
-          <option value="waiting_confirmation" ${o.status === 'waiting_confirmation' ? 'selected' : ''}>Menunggu Konfirmasi</option>
-          <option value="payment_received" ${o.status === 'payment_received' ? 'selected' : ''}>Pembayaran Diterima</option>
-          <option value="payment_failed" ${o.status === 'payment_failed' ? 'selected' : ''}>Pembayaran Gagal</option>
-          <option value="done" ${o.status === 'done' ? 'selected' : ''}>Pesanan Selesai</option>
-        </select>
-        <!-- UPDATED: Added class="admin-button" -->
-        <button onclick="saveOrderStatus('${o.id}')" class="admin-button">Update</button>
-      `;
-      container.appendChild(div);
-    });
-  } else {
-    container.innerHTML = "<p>Belum ada pesanan.</p>";
-  }
+    div.innerHTML = `
+      <p><strong>${o.product_name}</strong></p>
+      <p>User: ${o.username}</p>
+      <p>Status: <strong>${o.status}</strong></p>
+      <p>Email: ${o.contact_email}</p>
+      <p>Bukti: ${o.payment_proof ? `<a href="${o.payment_proof}" target="_blank">Lihat</a>` : "-"}</p>
+
+      <button class="admin-button" onclick="updateOrderStatus('${o.id}', 'done')">Selesai</button>
+      <button class="admin-button danger" onclick="updateOrderStatus('${o.id}', 'rejected')">Tolak</button>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
-async function saveOrderStatus(orderId) {
-  const newStatus = document.getElementById(`status-${orderId}`).value;
-  if (!newStatus) return alert("Pilih status baru dulu.");
-
-  const { error, data: orderData } = await window.supabase
+async function updateOrderStatus(id, status) {
+  await window.supabase
     .from("orders")
-    .update({ status: newStatus })
-    .eq("id", orderId)
-    .select("id, user_id, product_id, status, payment_proof, contact_email") // Tambahkan contact_email
+    .update({ status })
+    .eq("id", id);
+
+  alert("Status diperbarui.");
+  loadOrdersAdmin();
+}
+
+
+
+// ==================================================================
+// ======================  PENGATURAN ADMIN  ========================
+// ==================================================================
+
+async function loadSettings() {
+  const { data } = await window.supabase
+    .from("settings")
+    .select("*")
     .single();
+
+  if (!data) return;
+
+  // Isi pengumuman
+  document.getElementById("announcementInput").value = data.announcement || "";
+
+  // Isi promo
+  document.getElementById("promoMessagesInput").value =
+    data.promo_messages?.join("\n") || "";
+
+  // Nomor pembayaran
+  document.getElementById("inputDana").value = data.dana_number || "";
+  document.getElementById("inputOvo").value = data.ovo_number || "";
+  document.getElementById("inputGopay").value = data.gopay_number || "";
+}
+
+async function saveAnnouncement() {
+  const text = document.getElementById("announcementInput").value;
+
+  await window.supabase
+    .from("settings")
+    .update({ announcement: text })
+    .eq("id", 1);
+
+  alert("Pengumuman disimpan.");
+}
+
+async function savePromoMessages() {
+  const raw = document.getElementById("promoMessagesInput").value.trim();
+  const list = raw.split("\n").filter(x => x.length > 0);
+
+  await window.supabase
+    .from("settings")
+    .update({ promo_messages: list })
+    .eq("id", 1);
+
+  alert("Promo disimpan.");
+}
+
+async function uploadQris() {
+  const file = document.getElementById("qrisUpload").files[0];
+
+  if (!file) return alert("Pilih gambar QRIS.");
+
+  const fileName = `qris_${Date.now()}.jpg`;
+
+  const { error } = await window.supabase.storage
+    .from("qris")
+    .upload(fileName, file);
 
   if (error) {
-    alert("Gagal update: " + error.message);
+    alert("Gagal upload QRIS.");
     return;
   }
 
-  const { data: userData } = await window.supabase
-    .from("users")
-    .select("username")
-    .eq("id", orderData.user_id)
-    .single();
+  const { data: urlData } = window.supabase.storage
+    .from("qris")
+    .getPublicUrl(fileName);
 
-  const { data: productData } = await window.supabase
-    .from("products")
-    .select("name")
-    .eq("id", orderData.product_id)
-    .single();
+  await window.supabase
+    .from("settings")
+    .update({ qris_image_url: urlData.publicUrl })
+    .eq("id", 1);
 
-  await fetch("/api/notify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      orders: [{
-        id: orderData.id,
-        username: userData?.username || "Unknown User",
-        product_name: productData?.name || "Unknown Product",
-        payment_proof: orderData.payment_proof,
-        status: orderData.status,
-        payment_method: orderData.payment_method, // Gunakan payment_method dari order
-        contact_email: orderData.contact_email, // Kirim contact_email
-      }],
-    }),
-  });
-
-  alert("✅ Status pesanan berhasil diupdate.");
-  loadOrders();
+  alert("QRIS berhasil diupload.");
 }
 
-async function loadQrisSettings() {
-  const { data, error } = await window.supabase.from("settings").select("qris_image_url, dana_number, gopay_number, announcement, promo_messages").single();
-  const currentQrisImage = document.getElementById("currentQrisImage");
-  const noQrisMessage = document.getElementById("noQrisMessage");
-  const danaNumberInput = document.getElementById("danaNumber");
-  const gopayNumberInput = document.getElementById("gopayNumber");
-  const announcementTextarea = document.getElementById("announcementText");
+async function savePaymentNumbers() {
+  const dana = document.getElementById("inputDana").value;
+  const ovo = document.getElementById("inputOvo").value;
+  const gopay = document.getElementById("inputGopay").value;
 
-  if (error && error.code !== 'PGRST116') {
-    console.error("Error loading settings:", error);
-    currentQrisImage.style.display = 'none';
-    noQrisMessage.style.display = 'block';
-    danaNumberInput.value = "";
-    gopayNumberInput.value = "";
-    announcementTextarea.value = "";
-    document.getElementById("promoMessages").value = ""; // Reset promo jika error
-    return;
-  }
+  await window.supabase
+    .from("settings")
+    .update({
+      dana_number: dana,
+      ovo_number: ovo,
+      gopay_number: gopay
+    })
+    .eq("id", 1);
 
-  if (data) {
-    if (data.qris_image_url) {
-      currentQrisImage.src = data.qris_image_url;
-      currentQrisImage.style.display = 'block';
-      noQrisMessage.style.display = 'none';
-    } else {
-      currentQrisImage.style.display = 'none';
-      noQrisMessage.style.display = 'block';
-    }
-    danaNumberInput.value = data.dana_number || "";
-    gopayNumberInput.value = data.gopay_number || "";
-    announcementTextarea.value = data.announcement || "";
+  alert("Nomor pembayaran disimpan.");
+}
 
-    // Tambahkan load promo
-    const promoTextarea = document.getElementById("promoMessages");
-    if (data.promo_messages && Array.isArray(data.promo_messages)) {
-      promoTextarea.value = data.promo_messages.join('\n'); // Array ke string dengan newline
-    } else {
-      promoTextarea.value = "";
+
+
+// ===========================
+// LOGOUT
+// ===========================
+async function logout() {
+  await window.supabase.auth.signOut();
+  window.location.href = "signin.html";
+}
+
+
+
+// ===========================
+// START
+// ===========================
+checkAdminAuth();moTextarea.value = "";
     }
   } else {
     currentQrisImage.style.display = 'none';
