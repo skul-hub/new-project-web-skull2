@@ -2,135 +2,135 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard - StoreSkull</title>
-  <link rel="icon" href="img/logo.jpeg">
+  <link rel="icon" href="img/logo.jpeg" type="image/jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - STORESKULL</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
+  <script src="admin-dashboard.js" defer></script>
 </head>
 
 <body>
 
-<!-- ========================================= -->
-<!-- NAVBAR ADMIN -->
-<!-- ========================================= -->
-<header class="navbar">
-  <h2>Admin Panel</h2>
-  <div class="nav-right">
-    <span id="adminName" class="admin-tag">Admin</span>
-    <button onclick="logout()" class="logout-btn">Logout</button>
-  </div>
+<header class="admin-header">
+  <h1>ADMIN DASHBOARD</h1>
 </header>
 
-<!-- ========================================= -->
-<!-- MENU NAVIGASI ADMIN -->
-<!-- ========================================= -->
-<nav class="admin-menu">
-  <button onclick="showSection('productsSection')">Kelola Produk</button>
-  <button onclick="showSection('ordersSection')">Kelola Pesanan</button>
-  <button onclick="showSection('scriptsSection')">Kelola Script</button>
-  <button onclick="showSection('settingsSection')">Pengaturan</button>
-</nav>
+<main class="admin-container">
 
-<!-- ========================================= -->
-<!-- SECTION: PRODUK -->
-<!-- ========================================= -->
-<section id="productsSection">
-  <h2>Kelola Produk</h2>
-
-  <div class="form-box">
-    <h3>Tambah Produk</h3>
-
-    <input type="text" id="prodName" placeholder="Nama Produk">
-    <input type="number" id="prodPrice" placeholder="Harga">
-    <select id="prodCategory">
-      <option value="panel_pterodactyl">Panel Pterodactyl</option>
-      <option value="game_account">Akun Game</option>
-    </select>
-    <input type="number" id="prodStock" placeholder="Stock">
-    <input type="text" id="prodImage" placeholder="Link Gambar">
-
-    <button onclick="addProduct()">Tambah Produk</button>
+  <!-- =============================== -->
+  <!--          NAVIGATION TABS        -->
+  <!-- =============================== -->
+  <div class="admin-tabs">
+    <button class="tab-btn active" onclick="openTab('products')">Products</button>
+    <button class="tab-btn" onclick="openTab('orders')">Orders</button>
+    <button class="tab-btn" onclick="openTab('scripts')">Scripts</button>
+    <button class="tab-btn" onclick="openTab('settings')">Settings</button>
   </div>
 
-  <h3>Daftar Produk</h3>
-  <div id="productsList" class="flex-list"></div>
-</section>
+  <!-- =============================== -->
+  <!--             PRODUCTS             -->
+  <!-- =============================== -->
+  <section id="products" class="tab-content active">
 
-<!-- ========================================= -->
-<!-- MODAL EDIT PRODUK -->
-<!-- ========================================= -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <h3>Edit Produk</h3>
+    <h2>Manage Products</h2>
 
-    <input type="hidden" id="editProdId">
+    <form id="addProductForm" onsubmit="addProduct(event)" class="admin-form">
+      <input type="text" id="prodName" placeholder="Nama Produk" required>
+      <input type="number" id="prodPrice" placeholder="Harga" required>
+      <input type="number" id="prodStock" placeholder="Stock" required>
 
-    <input type="text" id="editProdName" placeholder="Nama Produk">
-    <input type="number" id="editProdPrice" placeholder="Harga">
-    <select id="editProdCategory">
-      <option value="panel_pterodactyl">Panel Pterodactyl</option>
-      <option value="game_account">Akun Game</option>
-    </select>
-    <input type="number" id="editProdStock" placeholder="Stock">
-    <input type="text" id="editProdImage" placeholder="Link Gambar">
+      <select id="prodCategory" required>
+        <option value="" disabled selected>Kategori</option>
+        <option value="game">Game</option>
+        <option value="script">Script</option>
+        <option value="tool">Tool</option>
+      </select>
 
-    <button onclick="saveEditProduct()">Simpan</button>
-    <button onclick="document.getElementById('editModal').style.display='none'" class="danger">Tutup</button>
-  </div>
-</div>
+      <label>Gambar Produk:</label>
+      <input type="file" id="prodImage" accept="image/*" required>
 
-<!-- ========================================= -->
-<!-- SECTION: ORDERS -->
-<!-- ========================================= -->
-<section id="ordersSection" style="display:none;">
-  <h2>Kelola Pesanan</h2>
-  <div id="ordersList" class="flex-list"></div>
-</section>
+      <button type="submit" class="primary-btn">Tambah Produk</button>
+    </form>
 
-<!-- ========================================= -->
-<!-- SECTION: SCRIPTS -->
-<!-- ========================================= -->
-<section id="scriptsSection" style="display:none;">
-  <h2>Kelola Script</h2>
+    <div id="productList" class="admin-grid"></div>
+  </section>
 
-  <div class="form-box">
-    <h3>Tambah Script</h3>
+  <!-- =============================== -->
+  <!--              ORDERS             -->
+  <!-- =============================== -->
+  <section id="orders" class="tab-content">
+    <h2>Info Pembelian</h2>
+    <div id="orderList" class="admin-grid"></div>
+  </section>
 
-    <input type="text" id="scriptName" placeholder="Nama Script">
-    <input type="text" id="scriptImg" placeholder="Link Gambar Script">
-    <input type="text" id="scriptLink" placeholder="Link Download (Mediafire)">
-    <button onclick="addScript()">Tambah Script</button>
-  </div>
+  <!-- =============================== -->
+  <!--              SCRIPTS            -->
+  <!-- =============================== -->
+  <section id="scripts" class="tab-content">
 
-  <h3>Daftar Script</h3>
-  <div id="scriptsList" class="flex-list"></div>
-</section>
+    <h2>Manage Scripts</h2>
 
-<!-- ========================================= -->
-<!-- SECTION: SETTINGS -->
-<!-- ========================================= -->
-<section id="settingsSection" style="display:none;">
-  <h2>Pengaturan</h2>
+    <form id="addScriptForm" onsubmit="addScript(event)" class="admin-form">
+      <input type="text" id="scriptName" placeholder="Nama Script" required>
+      <input type="text" id="scriptDownload" placeholder="Link Download" required>
 
-  <div class="form-box">
-    <label>Pengumuman</label>
-    <textarea id="setAnnouncement"></textarea>
+      <label>Gambar Script:</label>
+      <input type="file" id="scriptImage" accept="image/*" required>
 
-    <label>Nomor Dana</label>
-    <input type="text" id="setDana">
+      <button class="primary-btn" type="submit">Tambah Script</button>
+    </form>
 
-    <label>Nomor GoPay</label>
-    <input type="text" id="setGopay">
+    <div id="scriptListAdmin" class="admin-grid"></div>
+  </section>
 
-    <label>Link Gambar QRIS</label>
-    <input type="text" id="setQris">
+  <!-- =============================== -->
+  <!--             SETTINGS            -->
+  <!-- =============================== -->
+  <section id="settings" class="tab-content">
 
-    <button onclick="saveSettings()">Simpan Pengaturan</button>
-  </div>
-</section>
+    <h2>Pengaturan Toko</h2>
 
-<script src="admin-dashboard.js"></script>
+    <form onsubmit="saveSettings(); return false;" class="admin-form">
+
+      <label>Pengumuman:</label>
+      <textarea id="setAnnouncement" placeholder="Masukkan pengumuman..."></textarea>
+
+      <label>Nomor Dana:</label>
+      <input type="text" id="setDana" placeholder="Contoh: 081234567890">
+
+      <label>Nomor GoPay:</label>
+      <input type="text" id="setGopay" placeholder="Contoh: 081234567890">
+
+      <label>QRIS Image URL:</label>
+      <input type="text" id="setQris" placeholder="URL QRIS">
+
+      <label>Upload QRIS Baru:</label>
+      <input type="file" id="qrisFile" accept="image/*">
+      <button onclick="uploadQrisImage(event)" class="secondary-btn">Upload QRIS</button>
+
+      <label>Promo Banner (pisahkan baris):</label>
+      <textarea id="promoMessages" placeholder="Promo 1&#10;Promo 2"></textarea>
+
+      <button class="primary-btn">Simpan Pengaturan</button>
+
+    </form>
+
+  </section>
+
+</main>
+
+<script>
+  // TAB UI FUNCTION
+  function openTab(tabName) {
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+    document.getElementById(tabName).classList.add("active");
+    event.target.classList.add("active");
+  }
+</script>
 
 </body>
 </html>
