@@ -35,9 +35,10 @@ async function signin(event) {
   }
 
   if (data.user.user_metadata.role === "admin") {
-    window.location.href = "admin-dashboard.html";
+    window.location.href = "admin-dashboard.html"; // langsung admin
 } else {
-    window.location.href = "index.html";
-  }
+    window.location.href = "user-dashboard.html";  // user langsung ke panel
+}
+
 
 }
