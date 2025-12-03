@@ -1,298 +1,606 @@
-// =====================================================
-// ADMIN DASHBOARD — STORESKULL
-// Semua fungsi sudah digabung + dirapikan + fix error
-// =====================================================
+// admin-dashboard.js
+let currentAdmin = null;
 
-// CEK AUTENTIKASI ADMIN
-document.addEventListener("DOMContentLoaded", async () => {
-    const { data } = await window.supabase.auth.getUser();
-    if (!data.user) return (window.location.href = "signin.html");
+async function checkAdminAuth() {
+  const { data: { user }, error } = await window.supabase.auth.getUser();
+  if (error || !user) {
+    window.location.href = "signin.html";
+    return;
+  }
 
-    if (data.user.user_metadata.role !== "admin") {
-        alert("Akses ditolak! Anda bukan admin.");
-        return (window.location.href = "index.html");
-    }
+  const { data: userData } = await window.supabase.from("users").select("*").eq("id", user.id).single();
+  if (!userData || userData.role !== "admin") {
+    alert("Akses ditolak.");
+    window.location.href = "signin.html";
+    return;
+  }
 
-    loadProducts();
-    loadOrders();
-    loadScripts();
-    loadSettings();
-});
+  currentAdmin = userData;
+  showSection("products");
+}
 
-// =====================================================
-// LOAD PRODUCTS
-// =====================================================
+function showSection(section) {
+  document.getElementById("products").style.display = "none";
+  document.getElementById("orders").style.display = "none";
+  document.getElementById("settings").style.display = "none";
+  document.getElementById("ratings").style.display = "none"; // Tambahkan ini
+  document.getElementById(section).style.display = "block";
+
+  if (section === "products") loadProducts();
+  if (section === "orders") loadOrders();
+  if (section === "settings") loadQrisSettings();
+  if (section === "ratings") loadRatings(); // Panggil fungsi baru
+}
+
 async function loadProducts() {
-    const { data, error } = await window.supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const { data, error } = await window.supabase.from("products").select("*");
+  if (error) return console.error(error);
 
-    const list = document.getElementById("productList");
-    list.innerHTML = "";
+  const container = document.getElementById("productsList");
+  container.innerHTML = "";
 
-    if (error) return console.error(error);
-
+  if (data && data.length > 0) {
     data.forEach((p) => {
-        list.innerHTML += `
-      <div class="admin-product-card">
-        <img src="${p.image}" class="admin-prod-img">
-        <h3>${p.name}</h3>
-        <p>Rp ${p.price.toLocaleString()}</p>
-        <p>Stock: ${p.stock}</p>
-        <button onclick="deleteProduct(${p.id})" class="danger-btn">Hapus</button>
-      </div>`;
+      const safeName = p.name.replace(/'/g, "\\'");
+      let stockInfo = '';
+      let stockButtons = '';
+      if (p.category === 'game_account') {
+        stockInfo = ` | Stok: <strong>${p.stock}</strong>`;
+        stockButtons = `
+          <button onclick="updateProductStock('${p.id}', ${p.stock - 1})" class="admin-button">-</button>
+          <button onclick="updateProductStock('${p.id}', ${p.stock + 1})" class="admin-button">+</button>
+        `;
+      }
+
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <p><strong>${p.name}</strong> - Rp ${p.price.toLocaleString()} (${p.category === 'panel_pterodactyl' ? 'Panel Pterodactyl' : 'Akun Game'})${stockInfo}</p>
+        <div class="product-actions">
+          ${stockButtons}
+          <button onclick="deleteProduct('${p.id}')" class="admin-button delete">🗑️ Hapus</button>
+          <button onclick="toggleProduct('${p.id}', ${p.active ? "false" : "true"})" class="admin-button">
+            ${p.active ? "Nonaktifkan" : "Aktifkan"}
+          </button>
+        </div>
+      `;
+      container.appendChild(div);
     });
+  } else {
+    container.innerHTML = "<p>Tidak ada produk.</p>";
+  }
 }
 
-// =====================================================
-// ADD PRODUCT
-// =====================================================
 async function addProduct(event) {
-    event.preventDefault();
+  event.preventDefault();
+  const name = document.getElementById("productName").value;
+  const price = parseInt(document.getElementById("productPrice").value, 10);
+  const category = document.getElementById("productCategory").value;
+  const stock = parseInt(document.getElementById("productStock").value, 10);
+  const file = document.getElementById("productImage").files[0];
 
-    const name = document.getElementById("prodName").value;
-    const price = document.getElementById("prodPrice").value;
-    const stock = document.getElementById("prodStock").value;
-    const category = document.getElementById("prodCategory").value;
-    const imgFile = document.getElementById("prodImage").files[0];
+  if (!name || !price || !category || !file) {
+    alert("Lengkapi semua field!");
+    return;
+  }
+    if (category === 'game_account' && (isNaN(stock) || stock < 0)) {
+    alert("Stok harus angka non-negatif untuk Akun Game.");
+    return;
+  }
 
-    if (!imgFile) return alert("Pilih gambar produk!");
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran gambar terlalu besar. Maksimal 2MB.");
+    return;
+  }
 
-    const ext = imgFile.name.split(".").pop();
-    const fileName = `product_${Date.now()}.${ext}`;
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const { error: upErr } = await window.supabase.storage.from("product-images").upload(fileName, file);
+  if (upErr) {
+    alert("Upload gagal: " + upErr.message);
+    return;
+  }
 
-    const { error: uploadErr } = await window.supabase.storage
-        .from("product_images")
-        .upload(fileName, imgFile);
+  const { data: urlData } = window.supabase.storage.from("product-images").getPublicUrl(fileName);
 
-    if (uploadErr) return alert("Gagal upload gambar!");
+  const { error } = await window.supabase.from("products").insert([
+    { name, price, image: urlData.publicUrl, active: true, category, stock: category === 'game_account' ? stock : null },
+  ]);
+  if (error) {
+    alert("Gagal tambah produk: " + error.message);
+    return;
+  }
 
-    const { data: urlData } = window.supabase.storage
-        .from("product_images")
-        .getPublicUrl(fileName);
-
-    const imageUrl = urlData.publicUrl;
-
-    const { error } = await window.supabase.from("products").insert([
-        { name, price, stock, category, image: imageUrl },
-    ]);
-
-    if (error) return alert("Gagal menambahkan produk!");
-
-    alert("Produk berhasil ditambahkan!");
-    loadProducts();
+  alert("Produk berhasil ditambahkan!");
+  document.getElementById("addProductForm").reset();
+  document.getElementById("productImage").value = "";
+  loadProducts();
 }
 
-// =====================================================
-// DELETE PRODUCT
-// =====================================================
 async function deleteProduct(id) {
-    if (!confirm("Hapus produk ini?")) return;
-
-    const { error } = await window.supabase
-        .from("products")
-        .delete()
-        .eq("id", id);
-
-    if (error) return alert("Gagal menghapus produk!");
-
-    loadProducts();
+  if (!confirm("Yakin ingin menghapus produk ini?")) return;
+  const { error } = await window.supabase.from("products").delete().eq("id", id);
+  if (error) {
+    alert("Gagal menghapus produk: " + error.message);
+    return;
+  }
+  alert("Produk berhasil dihapus.");
+  loadProducts();
 }
 
-// =====================================================
-// LOAD ORDERS (INFO PEMBELI)
-// =====================================================
+async function toggleProduct(id, newStatus) {
+  const { error } = await window.supabase
+    .from("products")
+    .update({ active: newStatus })
+    .eq("id", id);
+
+  if (error) {
+    alert("Gagal mengubah status produk: " + error.message);
+    return;
+  }
+
+  alert(`Produk berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}.`);
+  loadProducts();
+}
+
+async function updateProductStock(id, newStock) {
+  if (newStock < 0) {
+    alert("Stok tidak bisa kurang dari 0.");
+    return;
+  }
+  const { error } = await window.supabase
+    .from("products")
+    .update({ stock: newStock })
+    .eq("id", id);
+
+  if (error) {
+    alert("Gagal mengubah stok produk: " + error.message);
+    return;
+  }
+
+  alert("Stok produk berhasil diupdate.");
+  loadProducts();
+}
+
 async function loadOrders() {
-    const { data, error } = await window.supabase
-        .from("orders_view")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const { data, error } = await window.supabase
+    .from("orders_view")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    const list = document.getElementById("orderList");
-    list.innerHTML = "";
+  if (error) return console.error(error);
 
-    if (error) return console.error(error);
+  const container = document.getElementById("ordersList");
+  container.innerHTML = "";
 
+  if (data && data.length > 0) {
     data.forEach((o) => {
-        list.innerHTML += `
-      <div class="order-card">
-        <h3>${o.product_name}</h3>
-        <p>Pembeli: ${o.username}</p>
-        <p>Status: <b>${o.status}</b></p>
-        <button onclick="updateOrderStatus(${o.id}, 'done')" class="primary-btn">Selesaikan</button>
-        <button onclick="updateOrderStatus(${o.id}, 'cancel')" class="danger-btn">Batalkan</button>
-      </div>`;
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `
+        <p>Order ID: ${o.id}</p>
+        <p>User: ${o.username}</p>
+        <p>Produk: ${o.product_name} - Rp ${o.product_price.toLocaleString()}</p>
+        <p>Status Saat Ini: ${o.status.replace(/_/g, ' ').toUpperCase()}</p>
+        <p>Bukti TF: ${
+          o.payment_proof ? `<a href="${o.payment_proof}" target="_blank">Lihat</a>` : "-"
+        }</p>
+        <select id="status-${o.id}">
+          <option value="">--Pilih Status Baru--</option>
+          <option value="waiting_confirmation" ${o.status === 'waiting_confirmation' ? 'selected' : ''}>Menunggu Konfirmasi</option>
+          <option value="payment_received" ${o.status === 'payment_received' ? 'selected' : ''}>Pembayaran Diterima</option>
+          <option value="payment_failed" ${o.status === 'payment_failed' ? 'selected' : ''}>Pembayaran Gagal</option>
+          <option value="done" ${o.status === 'done' ? 'selected' : ''}>Pesanan Selesai</option>
+        </select>
+        <!-- UPDATED: Added class="admin-button" -->
+        <button onclick="saveOrderStatus('${o.id}')" class="admin-button">Update</button>
+      `;
+      container.appendChild(div);
     });
+  } else {
+    container.innerHTML = "<p>Belum ada pesanan.</p>";
+  }
 }
 
-// =====================================================
-// UPDATE ORDER STATUS
-// =====================================================
-async function updateOrderStatus(id, status) {
-    const { error } = await window.supabase
-        .from("orders")
-        .update({ status })
-        .eq("id", id);
+async function saveOrderStatus(orderId) {
+  const newStatus = document.getElementById(`status-${orderId}`).value;
+  if (!newStatus) return alert("Pilih status baru dulu.");
 
-    if (error) return alert("Gagal update status!");
+  const { error, data: orderData } = await window.supabase
+    .from("orders")
+    .update({ status: newStatus })
+    .eq("id", orderId)
+    .select("id, user_id, product_id, status, payment_proof, contact_email") // Tambahkan contact_email
+    .single();
 
-    loadOrders();
+  if (error) {
+    alert("Gagal update: " + error.message);
+    return;
+  }
+
+  const { data: userData } = await window.supabase
+    .from("users")
+    .select("username")
+    .eq("id", orderData.user_id)
+    .single();
+
+  const { data: productData } = await window.supabase
+    .from("products")
+    .select("name")
+    .eq("id", orderData.product_id)
+    .single();
+
+  await fetch("/api/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      orders: [{
+        id: orderData.id,
+        username: userData?.username || "Unknown User",
+        product_name: productData?.name || "Unknown Product",
+        payment_proof: orderData.payment_proof,
+        status: orderData.status,
+        payment_method: orderData.payment_method, // Gunakan payment_method dari order
+        contact_email: orderData.contact_email, // Kirim contact_email
+      }],
+    }),
+  });
+
+  alert("✅ Status pesanan berhasil diupdate.");
+  loadOrders();
 }
 
-// =====================================================
-// LOAD INFO SCRIPT
-// =====================================================
-async function loadScripts() {
-    const { data, error } = await window.supabase
-        .from("scripts")
-        .select("*")
-        .order("created_at", { ascending: false });
+async function loadQrisSettings() {
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url, dana_number, gopay_number, announcement, promo_messages").single();
+  const currentQrisImage = document.getElementById("currentQrisImage");
+  const noQrisMessage = document.getElementById("noQrisMessage");
+  const danaNumberInput = document.getElementById("danaNumber");
+  const gopayNumberInput = document.getElementById("gopayNumber");
+  const announcementTextarea = document.getElementById("announcementText");
 
-    const container = document.getElementById("scriptListAdmin");
-    container.innerHTML = "";
+  if (error && error.code !== 'PGRST116') {
+    console.error("Error loading settings:", error);
+    currentQrisImage.style.display = 'none';
+    noQrisMessage.style.display = 'block';
+    danaNumberInput.value = "";
+    gopayNumberInput.value = "";
+    announcementTextarea.value = "";
+    document.getElementById("promoMessages").value = ""; // Reset promo jika error
+    return;
+  }
 
-    if (error) return console.error(error);
+  if (data) {
+    if (data.qris_image_url) {
+      currentQrisImage.src = data.qris_image_url;
+      currentQrisImage.style.display = 'block';
+      noQrisMessage.style.display = 'none';
+    } else {
+      currentQrisImage.style.display = 'none';
+      noQrisMessage.style.display = 'block';
+    }
+    danaNumberInput.value = data.dana_number || "";
+    gopayNumberInput.value = data.gopay_number || "";
+    announcementTextarea.value = data.announcement || "";
 
-    data.forEach((s) => {
-        container.innerHTML += `
-      <div class="script-card-admin">
-        <img src="${s.image_url}" class="script-image-admin">
-        <h3>${s.name}</h3>
-        <button onclick="deleteScript(${s.id})" class="danger-btn">Hapus</button>
-      </div>`;
-    });
+    // Tambahkan load promo
+    const promoTextarea = document.getElementById("promoMessages");
+    if (data.promo_messages && Array.isArray(data.promo_messages)) {
+      promoTextarea.value = data.promo_messages.join('\n'); // Array ke string dengan newline
+    } else {
+      promoTextarea.value = "";
+    }
+  } else {
+    currentQrisImage.style.display = 'none';
+    noQrisMessage.style.display = 'block';
+    danaNumberInput.value = "";
+    gopayNumberInput.value = "";
+    announcementTextarea.value = "";
+    document.getElementById("promoMessages").value = ""; // Reset promo jika tidak ada data
+  }
 }
 
-// =====================================================
-// ADD SCRIPT
-// =====================================================
-async function addScript(event) {
-    event.preventDefault();
 
-    const name = document.getElementById("scriptName").value;
-    const link = document.getElementById("scriptDownload").value;
-    const imgFile = document.getElementById("scriptImage").files[0];
-
-    if (!imgFile) return alert("Pilih gambar script!");
-
-    const fileName = `script_${Date.now()}.${imgFile.name.split(".").pop()}`;
-
-    const { error: uploadErr } = await window.supabase.storage
-        .from("script_images")
-        .upload(fileName, imgFile);
-
-    if (uploadErr) return alert("Gagal upload gambar!");
-
-    const { data: urlData } = window.supabase.storage
-        .from("script_images")
-        .getPublicUrl(fileName);
-
-    const imageUrl = urlData.publicUrl;
-
-    const { error } = await window.supabase.from("scripts").insert([
-        { name, download_link: link, image_url: imageUrl },
-    ]);
-
-    if (error) return alert("Gagal menambahkan script!");
-
-    alert("Script berhasil ditambahkan!");
-    loadScripts();
-}
-
-// =====================================================
-// DELETE SCRIPT
-// =====================================================
-async function deleteScript(id) {
-    if (!confirm("Hapus script?")) return;
-
-    const { error } = await window.supabase
-        .from("scripts")
-        .delete()
-        .eq("id", id);
-
-    if (error) return alert("Gagal menghapus script!");
-
-    loadScripts();
-}
-
-// =====================================================
-// LOAD SETTINGS (QRIS / DANA / GOPAY / ANNOUNCEMENT / BANNER)
-// =====================================================
-async function loadSettings() {
-    const { data, error } = await window.supabase
-        .from("settings")
-        .select("*")
-        .eq("id", 1)
-        .single();
-
-    if (error) return console.error(error);
-
-    document.getElementById("setAnnouncement").value =
-        data.announcement || "";
-
-    document.getElementById("setDana").value = data.dana_number || "";
-    document.getElementById("setGopay").value = data.gopay_number || "";
-    document.getElementById("setQris").value = data.qris_image_url || "";
-
-    document.getElementById("promoMessages").value =
-        (data.promo_messages || []).join("\n");
-}
-
-// =====================================================
-// SAVE SETTINGS
-// =====================================================
-async function saveSettings() {
-    const announcement = document.getElementById("setAnnouncement").value;
-    const dana = document.getElementById("setDana").value;
-    const gopay = document.getElementById("setGopay").value;
-    const qris = document.getElementById("setQris").value;
-
-    const promoText = document.getElementById("promoMessages").value.trim();
-    const promoMessages = promoText
-        ? promoText.split("\n").map((v) => v.trim())
-        : [];
-
-    const { error } = await window.supabase
-        .from("settings")
-        .update({
-            announcement,
-            dana_number: dana,
-            gopay_number: gopay,
-            qris_image_url: qris,
-            promo_messages: promoMessages,
-            updated_at: new Date(),
-        })
-        .eq("id", 1);
-
-    if (error) return alert("Gagal menyimpan setting!");
-
-    alert("✔️ Pengaturan berhasil disimpan!");
-}
-
-// =====================================================
-// UPLOAD QRIS IMAGE
-// =====================================================
 async function uploadQrisImage(event) {
-    event.preventDefault();
-    const file = document.getElementById("qrisFile").files[0];
-    if (!file) return alert("Pilih file QRIS dulu!");
+  event.preventDefault();
+  const file = document.getElementById("qrisImageFile").files[0];
 
-    const fileName = `qris_${Date.now()}.${file.name.split(".").pop()}`;
+  if (!file) {
+    alert("Pilih file gambar QRIS untuk diupload!");
+    return;
+  }
 
-    const { error: uploadErr } = await window.supabase.storage
-        .from("qris_images")
-        .upload(fileName, file);
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran gambar QRIS terlalu besar. Maksimal 2MB.");
+    return;
+  }
 
-    if (uploadErr) return alert("Gagal upload QRIS!");
+  const fileName = `qris_${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const { error: uploadError } = await window.supabase.storage.from("qris-images").upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: false
+  });
 
-    const { data: urlData } = window.supabase.storage
-        .from("qris_images")
-        .getPublicUrl(fileName);
+  if (uploadError) {
+    alert("Gagal upload gambar QRIS: " + uploadError.message);
+    return;
+  }
 
-    const url = urlData.publicUrl;
+  const { data: urlData } = window.supabase.storage.from("qris-images").getPublicUrl(fileName);
+  const qrisImageUrl = urlData.publicUrl;
 
-    document.getElementById("setQris").value = url;
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
 
-    alert("QRIS berhasil diupload!");
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ qris_image_url: qrisImageUrl, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ qris_image_url: qrisImageUrl }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan URL QRIS: " + error.message);
+    return;
+  }
+
+  alert("Gambar QRIS berhasil diupload dan disimpan!");
+  document.getElementById("uploadQrisForm").reset();
+  loadQrisSettings();
 }
+
+async function saveDanaNumber(event) {
+  event.preventDefault();
+  const danaNumber = document.getElementById("danaNumber").value.trim();
+
+  if (!danaNumber) {
+    alert("Masukkan nomor Dana!");
+    return;
+  }
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ dana_number: danaNumber, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ dana_number: danaNumber }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan nomor Dana: " + error.message);
+    return;
+  }
+
+  alert("Nomor Dana berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function saveGopayNumber(event) {
+  event.preventDefault();
+  const gopayNumber = document.getElementById("gopayNumber").value.trim();
+
+  if (!gopayNumber) {
+    alert("Masukkan nomor GoPay!");
+    return;
+  }
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ gopay_number: gopayNumber, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ gopay_number: gopayNumber }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan nomor GoPay: " + error.message);
+    return;
+  }
+
+  alert("Nomor GoPay berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function saveAnnouncement(event) {
+  event.preventDefault();
+  const announcementText = document.getElementById("announcementText").value;
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ announcement: announcementText, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ announcement: announcementText }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan pengumuman: " + error.message);
+    return;
+  }
+
+  alert("Pengumuman berhasil disimpan!");
+  loadQrisSettings();
+}
+
+// Fungsi baru untuk memuat dan menampilkan rating
+async function loadRatings() {
+  const { data: ratings, error } = await window.supabase
+    .from("ratings")
+    .select(`
+      id,
+      rating,
+      comment,
+      created_at,
+      users(username),
+      products(name)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading ratings:", error);
+    return;
+  }
+
+  const container = document.getElementById("ratingsList");
+  container.innerHTML = "";
+
+  if (ratings && ratings.length > 0) {
+    // Tampilkan statistik rating
+    displayRatingStatistics(ratings);
+
+    const table = document.createElement("table");
+    table.className = "ratings-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Produk</th>
+          <th>Rating</th>
+          <th>Komentar</th>
+          <th>Tanggal</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    ratings.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.users ? r.users.username : 'N/A'}</td>
+        <td>${r.products ? r.products.name : 'N/A'}</td>
+        <td>${'⭐'.repeat(r.rating)} (${r.rating}/5)</td>
+        <td>${r.comment || '-'}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td>
+          <button onclick="deleteRating('${r.id}')" class="admin-button delete">🗑️ Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    container.appendChild(table);
+  } else {
+    // Reset statistik jika tidak ada rating
+    document.getElementById("totalRatingsCount").textContent = "0";
+    document.getElementById("averageRating").textContent = "0.0";
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById(`star${i}Count`).textContent = "0";
+      document.getElementById(`star${i}Percent`).textContent = "0%";
+      document.getElementById(`star${i}Bar`).style.width = "0%";
+    }
+    container.innerHTML = "<p>Belum ada rating atau komentar.</p>";
+  }
+}
+
+// Fungsi untuk menghapus rating
+async function deleteRating(ratingId) {
+  if (!confirm("Yakin ingin menghapus rating ini?")) return;
+
+  const { error } = await window.supabase.from("ratings").delete().eq("id", ratingId);
+
+  if (error) {
+    alert("Gagal menghapus rating: " + error.message);
+    console.error("Error deleting rating:", error);
+    return;
+  }
+
+  alert("Rating berhasil dihapus.");
+  loadRatings(); // Refresh daftar rating
+}
+
+// Fungsi untuk menampilkan statistik rating
+function displayRatingStatistics(ratings) {
+  const totalRatings = ratings.length;
+  let sumRatings = 0;
+  const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+  ratings.forEach(r => {
+    sumRatings += r.rating;
+    starCounts[r.rating]++;
+  });
+
+  const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : "0.0";
+
+  document.getElementById("totalRatingsCount").textContent = totalRatings;
+  document.getElementById("averageRating").textContent = averageRating;
+
+  for (let i = 1; i <= 5; i++) {
+    const count = starCounts[i];
+    const percentage = totalRatings > 0 ? ((count / totalRatings) * 100).toFixed(1) : "0.0";
+    document.getElementById(`star${i}Count`).textContent = count;
+    document.getElementById(`star${i}Percent`).textContent = `${percentage}%`;
+    document.getElementById(`star${i}Bar`).style.width = `${percentage}%`;
+  }
+}
+
+async function savePromoMessages(event) {
+  event.preventDefault();
+  const promoText = document.getElementById("promoMessages").value.trim();
+  const promoMessages = promoText ? promoText.split('\n').map(msg => msg.trim()).filter(msg => msg) : [];
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ promo_messages: promoMessages, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ promo_messages: promoMessages }]));
+  }
+  if (error) {
+    alert("Gagal menyimpan promo: " + error.message);
+    return;
+  }
+  alert("Promo berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function logout() {
+  await window.supabase.auth.signOut();
+  window.location.href = "signin.html";
+}
+
+window.onload = checkAdminAuth;
