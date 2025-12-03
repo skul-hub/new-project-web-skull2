@@ -1,34 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <link rel="icon" href="img/logo.jpeg" type="image/jpeg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STORESKULL</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="index.js" defer></script> <!-- file baru yang menangani tombol -->
+  <script src="index.js" defer></script>
 </head>
 <body>
-   <div id="startWrapper" class="start-wrapper" data-aos="fade-up">
-    <img src="img/logo.jpeg" alt="logo" class="start-logo" />
-    <h1 class="start-title">SELAMAT DATANG DI STORESKULL</h1>
+  <!-- Splash Screen -->
+  <div id="splash-screen">
+    <h1 class="splash-text">SHOP BANGSKULL</h1>
+  </div>
 
-    <p class="start-sub">Pilih salah satu untuk melanjutkan</p>
-
-    <div class="start-buttons">
-      <button id="btnInfoscript" class="primary-btn">INFOSCRIPT</button>
-      <button id="btnStorepanel" class="secondary-btn">STORE PANEL</button>
-    </div>
-   </div>
-
+  <!-- Konten utama akan dimuat setelah splash screen, atau langsung redirect ke login -->
+  <main style="display:none;">
+    <!-- Konten ini tidak akan terlihat karena akan langsung redirect -->
+  </main>
 
   <footer>
     <p>&copy; 2025 STORESKULL</p>
   </footer>
-
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-  <script> AOS.init(); </script>
 </body>
 </html>
