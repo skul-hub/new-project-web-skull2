@@ -604,3 +604,322 @@ async function logout() {
 }
 
 window.onload = checkAdminAuth;
+moTextarea.value = "";
+    }
+  } else {
+    currentQrisImage.style.display = 'none';
+    noQrisMessage.style.display = 'block';
+    danaNumberInput.value = "";
+    gopayNumberInput.value = "";
+    announcementTextarea.value = "";
+    document.getElementById("promoMessages").value = ""; // Reset promo jika tidak ada data
+  }
+}
+
+
+async function uploadQrisImage(event) {
+  event.preventDefault();
+  const file = document.getElementById("qrisImageFile").files[0];
+
+  if (!file) {
+    alert("Pilih file gambar QRIS untuk diupload!");
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran gambar QRIS terlalu besar. Maksimal 2MB.");
+    return;
+  }
+
+  const fileName = `qris_${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const { error: uploadError } = await window.supabase.storage.from("qris-images").upload(fileName, file, {
+    cacheControl: '3600',
+    upsert: false
+  });
+
+  if (uploadError) {
+    alert("Gagal upload gambar QRIS: " + uploadError.message);
+    return;
+  }
+
+  const { data: urlData } = window.supabase.storage.from("qris-images").getPublicUrl(fileName);
+  const qrisImageUrl = urlData.publicUrl;
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ qris_image_url: qrisImageUrl, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ qris_image_url: qrisImageUrl }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan URL QRIS: " + error.message);
+    return;
+  }
+
+  alert("Gambar QRIS berhasil diupload dan disimpan!");
+  document.getElementById("uploadQrisForm").reset();
+  loadQrisSettings();
+}
+
+async function saveDanaNumber(event) {
+  event.preventDefault();
+  const danaNumber = document.getElementById("danaNumber").value.trim();
+
+  if (!danaNumber) {
+    alert("Masukkan nomor Dana!");
+    return;
+  }
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ dana_number: danaNumber, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ dana_number: danaNumber }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan nomor Dana: " + error.message);
+    return;
+  }
+
+  alert("Nomor Dana berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function saveGopayNumber(event) {
+  event.preventDefault();
+  const gopayNumber = document.getElementById("gopayNumber").value.trim();
+
+  if (!gopayNumber) {
+    alert("Masukkan nomor GoPay!");
+    return;
+  }
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ gopay_number: gopayNumber, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ gopay_number: gopayNumber }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan nomor GoPay: " + error.message);
+    return;
+  }
+
+  alert("Nomor GoPay berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function saveAnnouncement(event) {
+  event.preventDefault();
+  const announcementText = document.getElementById("announcementText").value;
+
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ announcement: announcementText, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ announcement: announcementText }]));
+  }
+
+  if (error) {
+    alert("Gagal menyimpan pengumuman: " + error.message);
+    return;
+  }
+
+  alert("Pengumuman berhasil disimpan!");
+  loadQrisSettings();
+}
+
+// Fungsi baru untuk memuat dan menampilkan rating
+async function loadRatings() {
+  const { data: ratings, error } = await window.supabase
+    .from("ratings")
+    .select(`
+      id,
+      rating,
+      comment,
+      created_at,
+      users(username),
+      products(name)
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error loading ratings:", error);
+    return;
+  }
+
+  const container = document.getElementById("ratingsList");
+  container.innerHTML = "";
+
+  if (ratings && ratings.length > 0) {
+    // Tampilkan statistik rating
+    displayRatingStatistics(ratings);
+
+    const table = document.createElement("table");
+    table.className = "ratings-table";
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Produk</th>
+          <th>Rating</th>
+          <th>Komentar</th>
+          <th>Tanggal</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    `;
+    const tbody = table.querySelector("tbody");
+
+    ratings.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.users ? r.users.username : 'N/A'}</td>
+        <td>${r.products ? r.products.name : 'N/A'}</td>
+        <td>${'⭐'.repeat(r.rating)} (${r.rating}/5)</td>
+        <td>${r.comment || '-'}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td>
+          <button onclick="deleteRating('${r.id}')" class="admin-button delete">🗑️ Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    container.appendChild(table);
+  } else {
+    // Reset statistik jika tidak ada rating
+    document.getElementById("totalRatingsCount").textContent = "0";
+    document.getElementById("averageRating").textContent = "0.0";
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById(`star${i}Count`).textContent = "0";
+      document.getElementById(`star${i}Percent`).textContent = "0%";
+      document.getElementById(`star${i}Bar`).style.width = "0%";
+    }
+    container.innerHTML = "<p>Belum ada rating atau komentar.</p>";
+  }
+}
+
+// Fungsi untuk menghapus rating
+async function deleteRating(ratingId) {
+  if (!confirm("Yakin ingin menghapus rating ini?")) return;
+
+  const { error } = await window.supabase.from("ratings").delete().eq("id", ratingId);
+
+  if (error) {
+    alert("Gagal menghapus rating: " + error.message);
+    console.error("Error deleting rating:", error);
+    return;
+  }
+
+  alert("Rating berhasil dihapus.");
+  loadRatings(); // Refresh daftar rating
+}
+
+// Fungsi untuk menampilkan statistik rating
+function displayRatingStatistics(ratings) {
+  const totalRatings = ratings.length;
+  let sumRatings = 0;
+  const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+  ratings.forEach(r => {
+    sumRatings += r.rating;
+    starCounts[r.rating]++;
+  });
+
+  const averageRating = totalRatings > 0 ? (sumRatings / totalRatings).toFixed(1) : "0.0";
+
+  document.getElementById("totalRatingsCount").textContent = totalRatings;
+  document.getElementById("averageRating").textContent = averageRating;
+
+  for (let i = 1; i <= 5; i++) {
+    const count = starCounts[i];
+    const percentage = totalRatings > 0 ? ((count / totalRatings) * 100).toFixed(1) : "0.0";
+    document.getElementById(`star${i}Count`).textContent = count;
+    document.getElementById(`star${i}Percent`).textContent = `${percentage}%`;
+    document.getElementById(`star${i}Bar`).style.width = `${percentage}%`;
+  }
+}
+
+async function savePromoMessages(event) {
+  event.preventDefault();
+  const promoText = document.getElementById("promoMessages").value.trim();
+  const promoMessages = promoText ? promoText.split('\n').map(msg => msg.trim()).filter(msg => msg) : [];
+  const { data: existingSettings, error: fetchError } = await window.supabase
+    .from("settings")
+    .select("id")
+    .limit(1)
+    .single();
+  let error;
+  if (existingSettings) {
+    ({ error } = await window.supabase
+      .from("settings")
+      .update({ promo_messages: promoMessages, updated_at: new Date() })
+      .eq("id", existingSettings.id));
+  } else {
+    ({ error } = await window.supabase
+      .from("settings")
+      .insert([{ promo_messages: promoMessages }]));
+  }
+  if (error) {
+    alert("Gagal menyimpan promo: " + error.message);
+    return;
+  }
+  alert("Promo berhasil disimpan!");
+  loadQrisSettings();
+}
+
+async function logout() {
+  await window.supabase.auth.signOut();
+  window.location.href = "signin.html";
+}
+
+window.onload = checkAdminAuth;
