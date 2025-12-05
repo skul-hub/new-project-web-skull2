@@ -14,31 +14,20 @@ async function signin(event) {
     return;
   }
 
-  // Tetap ambil role (opsional) tapi arahkan user ke index terlebih dahulu
-  try {
-    const { data: userData, error: userError } = await window.supabase
-      .from("users")
-      .select("role")
-      .eq("id", data.user.id)
-      .single();
+  const { data: userData, error: userError } = await window.supabase
+    .from("users")
+    .select("role")
+    .eq("id", data.user.id)
+    .single();
 
-    if (userError || !userData) {
-      // kalau gagal ambil role, tetap redirect ke index
-      window.location.href = "index.html";
-      return;
-    }
-    // Simpan role di localStorage supaya index.html bisa menentukan tombol target
-    localStorage.setItem("user_role", userData.role || "user");
-    localStorage.setItem("user_id", data.user.id);
-  } catch (err) {
-    console.warn("Tidak bisa mengambil role user:", err);
+  if (userError || !userData) {
+    alert("Gagal memuat data user.");
+    return;
   }
 
-  if (data.user.user_metadata.role === "admin") {
-    window.location.href = "admin-dashboard.html"; // langsung admin
-} else {
-    window.location.href = "user-dashboard.html";  // user langsung ke panel
-}
-
-
+  if (userData.role === "admin") {
+    window.location.href = "admin-dashboard.html";
+  } else {
+    window.location.href = "user-dashboard.html";
+  }
 }
