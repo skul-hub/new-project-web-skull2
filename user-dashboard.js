@@ -553,6 +553,313 @@ async function openRatingModal(orderId, productId) {
 
   if (existingRating) {
     // Jika sudah ada, tampilkan rating dan komentar yang sudah ada
+    document.getElementById("selectedRating").value = existingRating.rating;saveCartToStorage(); // Simpan ke localStorage setelah hapus
+     updateCartDisplay();
+     alert("Produk dihapus dari keranjang.");
+   }
+   // Update window.onload untuk load cart
+   window.onload = () => {
+     loadCartFromStorage(); // Load cart dari localStorage
+     checkUserAuth();
+   };
+
+// ========== PEMBAYARAN BARU: Modal Pilihan Metode ==========
+async function buyNow(pid, name, price) {
+  if (!currentUser) {
+    alert("Silakan login untuk melakukan pembelian.");
+    window.location.href = "signin.html";
+    return;
+  }
+
+  const product = allProducts.find(p => p.id === pid);
+  if (product.category === 'game_account' && product.stock <= 0) {
+    alert("Stok produk ini sudah habis!");
+    return;
+  }
+
+  pendingCheckout = { mode: "single", item: { id: pid, name, price, category: product.category } };
+  openPaymentMethodModal();
+}
+
+async function checkout() {
+  if (!currentUser) {
+    alert("Silakan login untuk melakukan checkout.");
+    window.location.href = "signin.html";
+    return;
+  }
+  if (cart.length === 0) return alert("Keranjang kosong!");
+
+  // Check stock for all items in cart before proceeding
+  for (const item of cart) {
+    const product = allProducts.find(p => p.id === item.id);
+    if (product.category === 'game_account' && product.stock <= 0) {
+      alert(`Stok untuk produk "${product.name}" sudah habis. Silakan hapus dari keranjang.`);
+      return;
+    }
+  }
+
+  pendingCheckout = { mode: "cart" };
+  openPaymentMethodModal();
+}
+
+function saveCartToStorage() {
+     localStorage.setItem('userCart', JSON.stringify(cart));
+   }
+   function loadCartFromStorage() {
+     const storedCart = localStorage.getItem('userCart');
+     if (storedCart) {
+       cart = JSON.parse(storedCart);
+     }
+   }
+
+function openPaymentMethodModal() {
+  document.getElementById("paymentMethodModal").style.display = "flex";
+}
+
+function closePaymentMethodModal() {
+  document.getElementById("paymentMethodModal").style.display = "none";
+}
+
+function selectPaymentMethod(method) {
+  selectedPaymentMethod = method;
+  closePaymentMethodModal();
+  if (method === 'qris') {
+    openQris();
+  } else {
+    openAccountModal(method);
+  }
+}
+
+async function openQris() {
+  const { data, error } = await window.supabase.from("settings").select("qris_image_url").single();
+  if (error || !data || !data.qris_image_url) {
+    alert("QRIS belum diatur oleh admin. Silakan hubungi admin.");
+    return;
+  }
+  document.getElementById("qrisImage").src = data.qris_image_url;
+  document.getElementById("qrisModal").style.display = "flex";
+}
+
+function closeQris() {
+  document.getElementById("qrisModal").style.display = "none";
+  document.getElementById("proofFile").value = "";
+}
+
+async function confirmPayment() {
+  const file = document.getElementById("proofFile").files[0];
+  if (!file) return alert("Upload bukti transfer dulu.");
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran bukti transfer terlalu besar. Maksimal 2MB.");
+    return;
+  }
+
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const path = `${currentUser.id}/${fileName}`;
+  const { error: upErr } = await window.supabase.storage.from("proofs").upload(path, file);
+  if (upErr) {
+    alert("Gagal upload bukti: " + upErr.message);
+    return;
+  }
+  const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
+  uploadedProofUrl = urlData.publicUrl;
+
+  // Tutup modal QRIS, buka modal email
+  closeQris();
+  document.getElementById("emailModal").style.display = "flex";
+}
+
+async function openAccountModal(method) {
+  const { data, error } = await window.supabase.from("settings").select(`${method}_number`).single();
+  if (error || !data || !data[`${method}_number`]) {
+    alert(`Nomor ${method.toUpperCase()} belum diatur oleh admin. Silakan hubungi admin.`);
+    return;
+  }
+  document.getElementById("accountModalTitle").textContent = `Transfer ke ${method.toUpperCase()}`;
+  document.getElementById("accountNumberValue").textContent = data[`${method}_number`];
+  document.getElementById("accountModal").style.display = "flex";
+}
+
+function closeAccountModal() {
+  document.getElementById("accountModal").style.display = "none";
+  document.getElementById("accountProofFile").value = "";
+}
+
+async function confirmAccountPayment() {
+  const file = document.getElementById("accountProofFile").files[0];
+  if (!file) return alert("Upload bukti transfer dulu.");
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Ukuran bukti transfer terlalu besar. Maksimal 2MB.");
+    return;
+  }
+
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
+  const path = `${currentUser.id}/${fileName}`;
+  const { error: upErr } = await window.supabase.storage.from("proofs").upload(path, file);
+  if (upErr) {
+    alert("Gagal upload bukti: " + upErr.message);
+    return;
+  }
+  const { data: urlData } = window.supabase.storage.from("proofs").getPublicUrl(path);
+  uploadedProofUrl = urlData.publicUrl;
+
+  // Tutup modal account, buka modal email
+  closeAccountModal();
+  document.getElementById("emailModal").style.display = "flex";
+}
+
+function closeEmail() {
+  document.getElementById("emailModal").style.display = "none";
+  uploadedProofUrl = null;
+}
+
+async function submitEmail() {
+  // ✅ CEK kalau belum ada transaksi
+  if (!pendingCheckout) {
+    alert("Transaksi tidak ditemukan. Silakan ulangi proses checkout.");
+    return;
+  }
+
+  const email = document.getElementById("emailInput").value.trim();
+  if (!email || !email.includes("@")) return alert("Masukkan email yang valid.");
+
+  let ordersToNotify = [];
+  let productsToUpdateStock = [];
+
+  if (pendingCheckout.mode === "single") {
+    const product = allProducts.find(p => p.id === pendingCheckout.item.id);
+    if (product.category === 'game_account' && product.stock <= 0) {
+      alert("Stok produk ini sudah habis. Transaksi dibatalkan.");
+      closeEmail();
+      return;
+    }
+    const order = await createOrder(pendingCheckout.item, uploadedProofUrl, email, selectedPaymentMethod);
+    if (order) {
+      ordersToNotify.push(order);
+      if (product.category === 'game_account') {
+        productsToUpdateStock.push({ id: product.id, newStock: product.stock - 1 });
+      }
+    }
+  } else if (pendingCheckout.mode === "cart") {
+    for (const p of cart) {
+      const product = allProducts.find(prod => prod.id === p.id);
+      if (product.category === 'game_account' && product.stock <= 0) {
+        alert(`Stok untuk produk "${product.name}" sudah habis. Transaksi dibatalkan.`);
+        closeEmail();
+        return;
+      }
+      const order = await createOrder(p, uploadedProofUrl, email, selectedPaymentMethod);
+      if (order) {
+        ordersToNotify.push(order);
+        if (product.category === 'game_account') {
+          productsToUpdateStock.push({ id: product.id, newStock: product.stock - 1 });
+        }
+      }
+    }
+    cart = [];
+    updateCartDisplay();
+  }
+
+  // Update stock in database
+  for (const item of productsToUpdateStock) {
+    await window.supabase.from("products").update({ stock: item.newStock }).eq("id", item.id);
+  }
+
+  if (ordersToNotify.length > 0) {
+    await fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orders: ordersToNotify }),
+    });
+  }
+
+  document.getElementById("emailModal").style.display = "none";
+  alert("✅ Pesanan dibuat! Admin akan konfirmasi.\n\n📧 Produk akan dikirim ke email yang Anda masukkan.");
+  loadHistory();
+  loadProducts(); // Reload products to reflect stock changes
+
+  // reset setelah berhasil
+  pendingCheckout = null;
+  uploadedProofUrl = null;
+  selectedPaymentMethod = null;
+}
+
+async function createOrder(p, proofUrl, email, paymentMethod) {
+  const { data, error } = await window.supabase.from("orders").insert([{
+    product_id: p.id,
+    user_id: currentUser.id,
+    username: currentUser.username,
+    payment_method: paymentMethod,
+    payment_proof: proofUrl,
+    contact_email: email,
+    status: "waiting_confirmation",
+  }]).select().single();
+
+  if (error) {
+    alert("Gagal membuat order untuk " + p.name + ": " + error.message);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    username: currentUser.username,
+    product_name: p.name,
+    payment_method: paymentMethod,
+    payment_proof: proofUrl,
+    contact_email: email,
+    status: "waiting_confirmation",
+  };
+}
+
+let currentOrderIdForRating = null;
+let currentProductIdForRating = null;
+
+// Fungsi untuk menampilkan modal rating
+async function openRatingModal(orderId, productId) {
+  if (!currentUser) {
+    alert("Silakan login untuk memberi rating.");
+    window.location.href = "signin.html";
+    return;
+  }
+  currentOrderIdForRating = orderId;
+  currentProductIdForRating = productId;
+
+  // Ambil nama produk
+  const { data: productData, error: productError } = await window.supabase
+    .from("products")
+    .select("name")
+    .eq("id", productId)
+    .single();
+
+  // Lanjutan dari kode sebelumnya (setelah bagian yang terpotong di openRatingModal)
+
+  if (productError || !productData) {
+    console.error("Error fetching product name for rating:", productError);
+    alert("Gagal memuat informasi produk untuk rating.");
+    return;
+  }
+
+  document.getElementById("ratingProductName").textContent = productData.name;
+
+  // Reset bintang dan komentar
+  // Pastikan semua bintang tidak terpilih secara default
+  const stars = document.querySelectorAll(".rating-stars .star");
+  stars.forEach(star => {
+    star.classList.remove("selected");
+  });
+  document.getElementById("selectedRating").value = "0";
+  document.getElementById("ratingComment").value = "";
+
+  // Cek apakah user sudah pernah memberi rating untuk order ini
+  const { data: existingRating, error: ratingError } = await window.supabase
+    .from("ratings")
+    .select("*")
+    .eq("order_id", orderId)
+    .single();
+
+  if (existingRating) {
+    // Jika sudah ada, tampilkan rating dan komentar yang sudah ada
     document.getElementById("selectedRating").value = existingRating.rating;
     document.getElementById("ratingComment").value = existingRating.comment || "";
     // Set bintang yang terpilih berdasarkan rating yang sudah ada
