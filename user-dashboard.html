@@ -23,19 +23,12 @@
         <h1><a href="user-dashboard.html">STORESKULL</a></h1>
       </div>
       <ul class="nav-links">
-
-  <li><a id="nav-products" href="#" onclick="showSection('products')">Produk</a></li>
-
-  <li><a id="nav-cart" href="#" onclick="showSection('cart')">Keranjang</a></li>
-
-  <li><a id="nav-infoscript" href="infoscript.html">InfoScript</a></li>
-
-  <li><a id="nav-history" href="#" onclick="showSection('history')">History</a></li>
-
-  <li><a id="nav-ratings" href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li>
-
-  <li><a id="nav-logout" href="#" onclick="logout()">Logout</a></li>
-
+        <li><a href="#" onclick="showSection('products')">Produk</a></li>
+        <li style="display:none;"><a href="#" onclick="showSection('cart')">Keranjang</a></li> <!-- Sembunyikan default -->
+        <li style="display:none;"><a href="#" onclick="showSection('history')">History</a></li> <!-- Sembunyikan default -->
+        <li><a href="#" onclick="showSection('all-ratings')">Semua Rating Produk</a></li>
+        <li style="display:none;"><a href="#" onclick="logout()">Logout</a></li> <!-- Sembunyikan default -->
+        <!-- Link Login/Register akan ditambahkan/dihapus oleh JS di sini -->
       </ul>
       <button id="themeToggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     </nav>
