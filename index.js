@@ -1,155 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <link rel="icon" href="img/logo.jpeg" type="image/jpeg">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - STORESKULL</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="admin-dashboard.js" defer></script>
-  <style>
-    /* Tambahan styling agar dropdown + tombol rapi */
-    .order select {
-      margin-right: 0.5rem;
-      min-width: 200px;
-    }
+// index.js
 
-    .order-actions {
-      margin-top: 0.8rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  const splashScreen = document.getElementById("splash-screen");
+  const splashDuration = 2000; // Durasi splash screen dalam milidetik (2 detik)
+  const fadeOutDuration = 1000; // Durasi efek fade-out dalam milidetik (1 detik)
 
-    .order-actions button {
-      background: #238636;
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
+  setTimeout(() => {
+    // Tambahkan kelas fade-out untuk memulai transisi
+    splashScreen.classList.add("fade-out");
 
-    .order-actions button:hover {
-      background: #2ea043;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <nav>
-      <button onclick="showSection('products')">Produk</button>
-      <button onclick="showSection('orders')">Pesanan</button>
-      <button onclick="showSection('ratings')">Rating & Komentar</button> <!-- Tombol baru di navbar -->
-      <button onclick="showSection('settings')">Pengaturan</button>
-      <button onclick="logout()">Logout</button>
-    </nav>
-  </header>
-
-  <main>
-    <!-- Produk -->
-    <section id="products">
-      <h2>Tambah Produk</h2>
-      <form id="addProductForm" onsubmit="addProduct(event)">
-        <input type="text" id="productName" placeholder="Nama produk" required>
-        <input type="number" id="productPrice" placeholder="Harga (Rp)" required>
-        <select id="productCategory" required>
-          <option value="">Pilih Kategori</option>
-          <option value="panel_pterodactyl">Panel Pterodactyl</option>
-          <option value="game_account">Jual Akun Game</option>
-        </select>
-        <input type="number" id="productStock" placeholder="Stok (hanya untuk Akun Game)" min="0" value="0">
-        <input type="file" id="productImage" accept="image/*" required>
-        <button type="submit" class="admin-button">Tambah Produk</button>
-      </form>
-
-      <h2>Daftar Produk</h2>
-      <div id="productsList"></div>
-    </section>
-
-    <!-- Pesanan -->
-    <section id="orders" style="display:none;">
-      <h2>Daftar Pesanan</h2>
-      <div id="ordersList"></div>
-    </section>
-
-    <!-- Rating & Komentar -->
-    <section id="ratings" style="display:none;">
-      <h2>Rating & Komentar Pengguna</h2>
-
-      <div class="rating-summary">
-        <h3>Statistik Rating</h3>
-        <div id="ratingStats">
-          <p>Total Rating: <strong id="totalRatingsCount">0</strong></p>
-          <p>Rata-rata Rating: <strong id="averageRating">0.0</strong></p>
-          <p>Bintang 5: <strong id="star5Count">0</strong> (<span id="star5Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star5Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 4: <strong id="star4Count">0</strong> (<span id="star4Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star4Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 3: <strong id="star3Count">0</strong> (<span id="star3Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star3Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 2: <strong id="star2Count">0</strong> (<span id="star2Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star2Bar" class="progress-bar"></div></div></p>
-          <p>Bintang 1: <strong id="star1Count">0</strong> (<span id="star1Percent">0%</span>)
-            <div class="progress-bar-container"><div id="star1Bar" class="progress-bar"></div></div></p>
-        </div>
-      </div>
-
-      <div id="ratingsList">
-        <!-- Daftar rating akan dimuat di sini oleh JS -->
-      </div>
-    </section>
-
-    <!-- Pengaturan -->
-    <section id="settings" style="display:none;">
-      <h2>Pengaturan QRIS</h2>
-      <form id="uploadQrisForm" onsubmit="uploadQrisImage(event)">
-        <label for="qrisImageFile">Upload Gambar QRIS Baru:</label>
-        <input type="file" id="qrisImageFile" accept="image/*" required>
-        <button type="submit" class="admin-button">Upload & Simpan QRIS</button>
-      </form>
-
-      <div style="margin-top: 20px;">
-        <h3>QRIS Saat Ini:</h3>
-        <img id="currentQrisImage" src="" alt="QRIS Saat Ini" style="max-width: 200px; height: auto; border: 1px solid #238636; border-radius: 8px; display: none;">
-        <p id="noQrisMessage" style="color: #a0aec0;">Belum ada gambar QRIS diatur.</p>
-      </div>
-
-      <h2 style="margin-top: 3rem;">Pengaturan Nomor Dana</h2>
-      <form id="danaForm" onsubmit="saveDanaNumber(event)">
-        <label for="danaNumber">Nomor Dana:</label>
-        <input type="text" id="danaNumber" placeholder="Masukkan nomor Dana" required>
-        <button type="submit" class="admin-button">Simpan Dana</button>
-      </form>
-
-      <h2 style="margin-top: 3rem;">Pengaturan Nomor GoPay</h2>
-      <form id="gopayForm" onsubmit="saveGopayNumber(event)">
-        <label for="gopayNumber">Nomor GoPay:</label>
-        <input type="text" id="gopayNumber" placeholder="Masukkan nomor GoPay" required>
-        <button type="submit" class="admin-button">Simpan GoPay</button>
-      </form>
-
-      <h2 style="margin-top: 3rem;">Pengaturan Pengumuman</h2>
-      <form id="announcementForm" onsubmit="saveAnnouncement(event)">
-        <label for="announcementText">Teks Pengumuman:</label>
-        <textarea id="announcementText" rows="5" placeholder="Masukkan teks pengumuman di sini..."></textarea>
-        <button type="submit" class="admin-button">Simpan Pengumuman</button>
-      </form>
-
-      <h2 style="margin-top: 3rem;">Pengaturan Promo Banner</h2>
-<form id="promoForm" onsubmit="savePromoMessages(event)">
-  <label for="promoMessages">Pesan Promo (satu per baris):</label>
-  <textarea id="promoMessages" rows="5" placeholder="Diskon 50% untuk Panel Pterodactyl!&#10;Event Spesial Akun Game!&#10;Update Panel Terbaru!"></textarea>
-  <button type="submit" class="admin-button">Simpan Promo</button>
-</form>
-    </section>
-  </main>
-
-  <footer>
-    <p>&copy; 2025 STORESKULL</p>
-  </footer>
-</body>
-</html>
+    // Setelah transisi fade-out selesai, redirect ke halaman user-dashboard.html
+    setTimeout(() => {
+      window.location.href = "user-dashboard.html";
+    }, fadeOutDuration); // Tunggu sampai fade-out selesai
+  }, splashDuration); // Tampilkan splash screen selama splashDuration sebelum fade-out
+});
